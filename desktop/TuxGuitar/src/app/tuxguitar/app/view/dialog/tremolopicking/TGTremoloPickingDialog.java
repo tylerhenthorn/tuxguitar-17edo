@@ -9,6 +9,7 @@ import app.tuxguitar.app.view.util.TGDialogUtil;
 import app.tuxguitar.document.TGDocumentContextAttributes;
 import app.tuxguitar.editor.action.TGActionProcessor;
 import app.tuxguitar.editor.action.effect.TGChangeTremoloPickingAction;
+import app.tuxguitar.song.models.TGDivisionType;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.song.models.effects.TGEffectTremoloPicking;
@@ -17,6 +18,7 @@ import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.UIButton;
+import app.tuxguitar.ui.widget.UICheckBox;
 import app.tuxguitar.ui.widget.UILegendPanel;
 import app.tuxguitar.ui.widget.UIPanel;
 import app.tuxguitar.ui.widget.UIRadioButton;
@@ -29,6 +31,7 @@ public class TGTremoloPickingDialog {
 	private UIRadioButton thirtySecondButton;
 	private UIRadioButton sixTeenthButton;
 	private UIRadioButton eighthButton;
+	private UICheckBox tripletButton;
 
 	public TGTremoloPickingDialog(){
 		super();
@@ -48,11 +51,13 @@ public class TGTremoloPickingDialog {
 
 			// look for first note with tremoloPicking effect within selection to initialize dialog
 			int duration = 0;
+			boolean triplet = false;
 			Iterator<TGNote> it = noteRange.getNotes().iterator();
 			while (it.hasNext() && (duration == 0)) {
 				TGNote n = it.next();
 				if (n.getEffect().isTremoloPicking()) {
 					duration = n.getEffect().getTremoloPicking().getDuration().getValue();
+					triplet = n.getEffect().getTremoloPicking().getDuration().getDivision().isEqual(TGDivisionType.TRIPLET);
 				}
 			}
 			if (duration == 0) {
@@ -83,6 +88,11 @@ public class TGTremoloPickingDialog {
 			this.eighthButton.setImage(TuxGuitar.getInstance().getIconManager().getDuration(TGDuration.EIGHTH));
 			this.eighthButton.setSelected(duration == TGDuration.EIGHTH);
 			durationLayout.set(this.eighthButton, 1, 3, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true);
+
+			this.tripletButton = uiFactory.createCheckBox(durationGroup);
+			this.tripletButton.setText(TuxGuitar.getProperty("duration.division-type.3"));
+			this.tripletButton.setSelected(triplet);
+			durationLayout.set(this.tripletButton, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 3);
 
 			//---------------------------------------------------
 			//------------------BUTTONS--------------------------
@@ -137,6 +147,9 @@ public class TGTremoloPickingDialog {
 			effect.getDuration().setValue(TGDuration.EIGHTH);
 		} else {
 			return null;
+		}
+		if(this.tripletButton.isSelected()) {
+			effect.getDuration().getDivision().copyFrom(TGDivisionType.TRIPLET);
 		}
 		return effect;
 	}

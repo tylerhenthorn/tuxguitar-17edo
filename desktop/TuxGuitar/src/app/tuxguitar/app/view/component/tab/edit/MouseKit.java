@@ -1,6 +1,8 @@
 package app.tuxguitar.app.view.component.tab.edit;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.action.impl.edit.TGMoveSelectionAction;
+import app.tuxguitar.app.action.impl.edit.TGUpdateDragMoveAction;
 import app.tuxguitar.app.action.impl.edit.tablature.TGMouseClickAction;
 import app.tuxguitar.app.action.impl.edit.tablature.TGMouseExitAction;
 import app.tuxguitar.app.action.impl.edit.tablature.TGMouseMoveAction;
@@ -22,6 +24,8 @@ public class MouseKit implements UIMouseDownListener, UIMouseUpListener, UIMouse
 	private UIPosition position;
 	private UIPosition startPosition;
 	private boolean menuOpen;
+	private boolean movingSelection;
+	private boolean dragged;
 
 	public MouseKit(EditorKit kit){
 		this.kit = kit;
@@ -50,7 +54,12 @@ public class MouseKit implements UIMouseDownListener, UIMouseUpListener, UIMouse
 		if (event.getButton() == 1) {
 			this.position.set(event.getPosition());
 			this.startPosition = this.position.clone();
-			if (event.isShiftDown()) {
+			this.dragged = false;
+			// Ctrl + drag on an active selection moves the selected beats
+			this.movingSelection = (Boolean.TRUE.equals(event.isControlDown()) && !this.isBusy() && this.kit.getTablature().getSelector().isActive());
+			if (this.movingSelection) {
+				this.executeAction(TGUpdateDragMoveAction.NAME, this.position.clone(), event, false);
+			} else if (event.isShiftDown()) {
 				this.executeAction(TGUpdateDragSelectionAction.NAME, this.position.clone(), event, false);
 			} else {
 				this.executeAction(TGStartDragSelectionAction.NAME, this.position.clone(), event, false);
@@ -61,7 +70,14 @@ public class MouseKit implements UIMouseDownListener, UIMouseUpListener, UIMouse
 	public void onMouseUp(UIMouseEvent event) {
 		if (event.getButton() == 1) {
 			this.startPosition = null;
-			this.executeAction(TGMouseClickAction.NAME, this.position.clone(), event, false);
+			if (this.movingSelection) {
+				this.movingSelection = false;
+				if (this.dragged) {
+					this.executeAction(TGMoveSelectionAction.NAME, this.position.clone(), event, false);
+				}
+			} else {
+				this.executeAction(TGMouseClickAction.NAME, this.position.clone(), event, false);
+			}
 		}
 	}
 
@@ -69,7 +85,8 @@ public class MouseKit implements UIMouseDownListener, UIMouseUpListener, UIMouse
 		if (this.startPosition != null) {
 			this.position.set(this.startPosition);
 			this.position.add(event.getPosition());
-			this.executeAction(TGUpdateDragSelectionAction.NAME, this.position.clone(), event, false);
+			this.dragged = true;
+			this.executeAction((this.movingSelection ? TGUpdateDragMoveAction.NAME : TGUpdateDragSelectionAction.NAME), this.position.clone(), event, false);
 		}
 	}
 

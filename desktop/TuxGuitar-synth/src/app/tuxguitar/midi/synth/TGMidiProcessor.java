@@ -9,4 +9,7 @@ public interface TGMidiProcessor extends TGAudioProcessor {
 	void sendPitchBend(int value, int voice, boolean bendMode);
 
 	void sendControlChange(int controller, int value);
+
+	default void sendSysex(byte[] data) {
+	}
 }

@@ -4,15 +4,21 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import app.tuxguitar.song.models.TGChord;
 import app.tuxguitar.song.models.TGNote;
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
 import app.tuxguitar.song.models.effects.TGEffectBend;
 
 public class ASCIIOutputStream {
 	private PrintWriter writer;
 	private int x;
 	private int y;
+	private TGFretLabelFormatter fretLabelFormatter = TGFretLabelFormatter.DEFAULT;
 
 	public ASCIIOutputStream(PrintStream stream){
 		this.writer = new PrintWriter(stream);
+	}
+
+	public void setFretLabelFormatter(TGFretLabelFormatter fretLabelFormatter) {
+		this.fretLabelFormatter = (fretLabelFormatter != null ? fretLabelFormatter : TGFretLabelFormatter.DEFAULT);
 	}
 
 	public int drawChord(TGChord chord) {
@@ -31,7 +37,7 @@ public class ASCIIOutputStream {
 			} else if (note.getEffect().isBend() && (note.getEffect().getBend().getMovements().size()==0)) { // bend.getMovements().size()==0 means hold bend
 				noteString.append("H");
 			} else {
-				noteString.append(fret);
+				noteString.append(this.fretLabelFormatter.format(fret));
 			}
 			if (note.getEffect().isHammer() && (nextNote !=null)) {
 				if (nextNote.getValue()>fret) {

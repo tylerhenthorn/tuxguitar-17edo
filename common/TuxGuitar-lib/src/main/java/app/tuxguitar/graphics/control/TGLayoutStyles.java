@@ -36,6 +36,7 @@ public class TGLayoutStyles {
 	private float loopMarkerSpacing;
 	private float[] lineWidths;
 	private float[] durationWidths;
+	private TGFretLabelFormatter fretLabelFormatter = TGFretLabelFormatter.DEFAULT;
 	private UIFontModel defaultFont;
 	private UIFontModel noteFont;
 	private UIFontModel lyricFont;
@@ -307,6 +308,14 @@ public class TGLayoutStyles {
 
 	public void setDurationWidths(float[] durationWidths) {
 		this.durationWidths = durationWidths;
+	}
+
+	public TGFretLabelFormatter getFretLabelFormatter() {
+		return fretLabelFormatter;
+	}
+
+	public void setFretLabelFormatter(TGFretLabelFormatter fretLabelFormatter) {
+		this.fretLabelFormatter = (fretLabelFormatter != null ? fretLabelFormatter : TGFretLabelFormatter.DEFAULT);
 	}
 
 	public UIFontModel getDefaultFont() {

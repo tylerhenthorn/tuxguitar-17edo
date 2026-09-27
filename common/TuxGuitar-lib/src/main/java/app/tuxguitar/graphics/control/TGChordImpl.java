@@ -42,6 +42,9 @@ public class TGChordImpl extends TGChord {
 	private UIFont font;
 	private UIFont firstFretFont;
 	private float firstFretSpacing;
+	private TGFretLabelFormatter fretLabelFormatter = TGFretLabelFormatter.DEFAULT;
+	private String firstFretLabel;
+	private float firstFretLabelSpacing;
 	private float stringSpacing;
 	private float fretSpacing;
 	private float noteSize;
@@ -159,6 +162,30 @@ public class TGChordImpl extends TGChord {
 		this.firstFretSpacing = firstFretSpacing;
 	}
 
+	/** Room reserved for the first-fret label: the configured spacing, widened if an EDO label needs it. */
+	public float getFirstFretLabelSpacing() {
+		return (this.firstFretLabelSpacing > 0 ? this.firstFretLabelSpacing : this.firstFretSpacing);
+	}
+
+	public void setFretLabelFormatter(TGFretLabelFormatter fretLabelFormatter) {
+		this.fretLabelFormatter = (fretLabelFormatter != null ? fretLabelFormatter : TGFretLabelFormatter.DEFAULT);
+	}
+
+	protected void updateFirstFretLabel(UIPainter painter) {
+		String label = this.fretLabelFormatter.format(getFirstFret());
+		float spacing = getFirstFretSpacing();
+		UIFont font = getFirstFretFont();
+		if (painter != null && font != null) {
+			painter.setFont(font);
+			spacing = Math.max(spacing, painter.getFMWidth(label) + (spacing / 4f));
+		}
+		if (!isDisposed() && (!label.equals(this.firstFretLabel) || spacing != this.firstFretLabelSpacing)) {
+			this.dispose();
+		}
+		this.firstFretLabel = label;
+		this.firstFretLabelSpacing = spacing;
+	}
+
 	public float getFretSpacing() {
 		return this.fretSpacing;
 	}
@@ -238,9 +265,9 @@ public class TGChordImpl extends TGChord {
 		float y = (fromY + getPosY());
 		if( (this.style & TGLayout.DISPLAY_CHORD_DIAGRAM) != 0 ){
 			if(this.diagram != null){
-				painter.drawImage(this.diagram,x - ( (this.diagramWidth - getFirstFretSpacing()) / 2) - getFirstFretSpacing() ,y);
+				painter.drawImage(this.diagram,x - ( (this.diagramWidth - getFirstFretLabelSpacing()) / 2) - getFirstFretLabelSpacing() ,y);
 			}else{
-				paintDiagram(painter,x - ( (this.diagramWidth - getFirstFretSpacing()) / 2) - getFirstFretSpacing() ,y);
+				paintDiagram(painter,x - ( (this.diagramWidth - getFirstFretLabelSpacing()) / 2) - getFirstFretLabelSpacing() ,y);
 			}
 			y += this.diagramHeight;
 		}
@@ -258,6 +285,7 @@ public class TGChordImpl extends TGChord {
 		if( getFirstFret() <= 0 ){
 			this.calculateFirstFret();
 		}
+		this.updateFirstFretLabel(painter);
 		if( (this.style & TGLayout.DISPLAY_CHORD_NAME) != 0 ){
 			this.updateName(painter);
 			this.width = Math.max(this.width,this.nameWidth);
@@ -283,7 +311,7 @@ public class TGChordImpl extends TGChord {
 
 	protected void updateDiagram(UIResourceFactory bufferFactory, TGResourceBuffer resourceBuffer){
 		UIFont font = getFirstFretFont();
-		this.diagramWidth = getStringSpacing() + (getStringSpacing() * countStrings()) + ((font != null)?getFirstFretSpacing():0);
+		this.diagramWidth = getStringSpacing() + (getStringSpacing() * countStrings()) + ((font != null)?getFirstFretLabelSpacing():0);
 		this.diagramHeight = getFretSpacing() + (getFretSpacing() * MAX_FRETS);
 		if( bufferFactory != null && (this.diagram == null || this.diagram.isDisposed())){
 			this.diagram = bufferFactory.createImage(this.diagramWidth, this.diagramHeight);
@@ -312,10 +340,10 @@ public class TGChordImpl extends TGChord {
 		float y = fromY + getFretSpacing();
 
 		if( font != null ){
-			String firstFretString = Integer.toString(getFirstFret());
+			String firstFretString = (this.firstFretLabel != null ? this.firstFretLabel : Integer.toString(getFirstFret()));
 			painter.setFont(font);
-			painter.drawString(firstFretString, fromX + (getFirstFretSpacing() - painter.getFMWidth(firstFretString)), (y + ((getFretSpacing() / 2f) + painter.getFMMiddleLine())));
-			x += getFirstFretSpacing();
+			painter.drawString(firstFretString, fromX + (getFirstFretLabelSpacing() - painter.getFMWidth(firstFretString)), (y + ((getFretSpacing() / 2f) + painter.getFMMiddleLine())));
+			x += getFirstFretLabelSpacing();
 		}
 
 		painter.initPath();

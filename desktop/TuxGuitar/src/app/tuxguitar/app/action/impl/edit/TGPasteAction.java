@@ -30,26 +30,37 @@ public class TGPasteAction extends TGActionBase {
 		super(context, NAME);
 	}
 
+	protected TGPasteAction(TGContext context, String name) {
+		super(context, name);
+	}
+
 	protected void processAction(TGActionContext tgActionContext){
 		TGClipboard clipboard = TGClipboard.getInstance(getContext());
 		TGStoredBeatList beatList = TGClipboard.getInstance(this.getContext()).getBeats();
 		if (clipboard.getSegment() != null) {
 			TGActionManager.getInstance(this.getContext()).execute(TGOpenMeasurePasteDialogAction.NAME, tgActionContext);
 		} else if (beatList != null && beatList.getBeats().size() > 0) {
-			TGFactory factory = getSongManager(tgActionContext).getFactory();
-			TGSongManager songManager = this.getSongManager(tgActionContext);
-			TGTrackManager trackManager = songManager.getTrackManager();
-			TGMeasureManager measureManager = songManager.getMeasureManager();
 			TGBeat beat = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_BEAT);
 			TGBeatRange beatRange = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_BEAT_RANGE);
 			TGTrack destTrack = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_TRACK);
-			TGSong song = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_SONG);
 
 			// where to paste to?
 			TGBeat destinationBeat = beat;
 			if ((beatRange != null) && !beatRange.isEmpty()) {
 				destinationBeat = beatRange.getBeats().get(0);
 			}
+
+			this.pasteBeats(tgActionContext, beatList, destTrack, destinationBeat.getPreciseStart());
+		}
+	}
+
+	protected void pasteBeats(TGActionContext tgActionContext, TGStoredBeatList beatList, TGTrack destTrack, long preciseStart) {
+		{
+			TGSongManager songManager = this.getSongManager(tgActionContext);
+			TGFactory factory = songManager.getFactory();
+			TGTrackManager trackManager = songManager.getTrackManager();
+			TGMeasureManager measureManager = songManager.getMeasureManager();
+			TGSong song = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_SONG);
 
 			// don't copy paste between percussion/non-percussion tracks
 			if (beatList.isPercussionTrack() == destTrack.isPercussion()) {
@@ -64,7 +75,7 @@ public class TGPasteAction extends TGActionBase {
 				long endSong = lastHeader.getPreciseStart() + lastHeader.getPreciseLength();
 				long endLastBeatToPaste = 0;
 				for (TGBeat beatToInsert : beatsListToPaste.getBeats()) {
-					endLastBeatToPaste = Math.max(endLastBeatToPaste, destinationBeat.getPreciseStart() + beatToInsert.getPreciseStart() + measureManager.getMaximumDuration(beatToInsert).getPreciseTime());
+					endLastBeatToPaste = Math.max(endLastBeatToPaste, preciseStart + beatToInsert.getPreciseStart() + measureManager.getMaximumDuration(beatToInsert).getPreciseTime());
 				}
 				while (endLastBeatToPaste > endSong) {
 					lastHeader = songManager.addNewMeasureBeforeEnd(song);
@@ -73,7 +84,7 @@ public class TGPasteAction extends TGActionBase {
 				}
 
 				// replace beats at required position
-				List<TGBeat> newBeats = trackManager.replaceBeats(destTrack, beatsListToPaste.getBeats(), destinationBeat.getPreciseStart());
+				List<TGBeat> newBeats = trackManager.replaceBeats(destTrack, beatsListToPaste.getBeats(), preciseStart);
 
 				// re-select new beats
 				if ((newBeats!=null) && (newBeats.size()>0))  {	// test is theoretically useless, just a precaution

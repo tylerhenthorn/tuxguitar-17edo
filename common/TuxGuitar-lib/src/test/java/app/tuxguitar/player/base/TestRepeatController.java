@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 
 import app.tuxguitar.io.tg.TestFileFormat20;
+import app.tuxguitar.song.managers.TGSongManager;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGSong;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,35 @@ public class TestRepeatController {
 		checkSequence(new MidiRepeatController(this.song, 11, 12),
 				new int[] {11,11, 12,12},
 				new int[] {0,1, 1,2});
+	}
+
+	@Test
+	public void testRepeatCloseWithoutRepeatOpen() {
+		// 4 measures, repeat close on measures 1, 2 and 4, no explicit repeat open
+		TGSongManager songManager = new TGSongManager();
+		TGSong newSong = songManager.newSong();
+		while (newSong.countMeasureHeaders() < 4) {
+			songManager.addNewMeasureBeforeEnd(newSong);
+		}
+		newSong.getMeasureHeader(0).setRepeatClose(1);
+		newSong.getMeasureHeader(1).setRepeatClose(1);
+		newSong.getMeasureHeader(3).setRepeatClose(1);
+
+		int[] expectedMeasures = new int[] {1,1, 2,2, 3,4, 3,4};
+		MidiRepeatController controller = new MidiRepeatController(newSong, -1, -1);
+		int i=0;
+		while (!controller.finished()) {
+			int index = controller.getIndex();
+			controller.process();
+			if (controller.shouldPlay()) {
+				if (i>=expectedMeasures.length) {
+					fail("too long sequence");
+				}
+				assertEquals(expectedMeasures[i], index+1, "unexpected measure");
+				i++;
+			}
+		}
+		assertEquals(i,expectedMeasures.length, "too short sequence");
 	}
 
 	private void checkSequence(MidiRepeatController controller, int[] expectedMeasures, int[] expectedMoveNbMeasures) {

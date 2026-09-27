@@ -15,7 +15,7 @@ import app.tuxguitar.util.singleton.TGSingletonUtil;
 
 public class TGApplication {
 
-	public static final String NAME = "TuxGuitar";
+	public static final String NAME = "TuxGuitar 17EDO";
 
 	private TGContext context;
 	private UIApplication application;

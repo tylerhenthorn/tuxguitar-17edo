@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.sound.midi.Instrument;
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.Patch;
 import javax.sound.midi.Receiver;
+import javax.sound.midi.SysexMessage;
 import javax.sound.sampled.AudioInputStream;
 
 import app.tuxguitar.midi.synth.TGAudioBuffer;
@@ -180,6 +182,18 @@ public class GervillProcessor implements TGMidiProcessor {
 	public void sendControlChange(int controller, int value) {
 		for(MidiChannel midiChannel : this.synth.getChannels()) {
 			midiChannel.controlChange(controller, value);
+		}
+	}
+
+	public void sendSysex(byte[] data) {
+		if( this.receiver != null && data != null ) {
+			try {
+				SysexMessage message = new SysexMessage();
+				message.setMessage(data, data.length);
+				this.receiver.send(message, -1);
+			} catch (InvalidMidiDataException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

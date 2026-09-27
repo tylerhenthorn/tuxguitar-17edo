@@ -5,6 +5,7 @@ import app.tuxguitar.document.TGDocumentContextAttributes;
 import app.tuxguitar.editor.action.TGActionBase;
 import app.tuxguitar.song.models.TGChannel;
 import app.tuxguitar.song.models.TGTrack;
+import app.tuxguitar.player.base.MidiTuning;
 import app.tuxguitar.util.TGContext;
 
 public class TGSetTrackChannelAction extends TGActionBase {
@@ -19,7 +20,11 @@ public class TGSetTrackChannelAction extends TGActionBase {
 		TGTrack track = ((TGTrack) context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_TRACK));
 		TGChannel channel = ((TGChannel) context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_CHANNEL));
 		if( track != null ){
+			boolean percussion = track.isPercussion();
 			getSongManager(context).getTrackManager().changeChannel(track, channel);
+			if (percussion && !track.isPercussion()) {
+				MidiTuning.getInstance(getContext()).convertDefaultTuning(track);
+			}
 		}
 	}
 }

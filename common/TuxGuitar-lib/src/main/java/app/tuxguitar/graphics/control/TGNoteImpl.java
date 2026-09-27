@@ -7,6 +7,7 @@ import app.tuxguitar.graphics.control.painters.TGNotePainter;
 import app.tuxguitar.graphics.control.painters.TGNumberPainter;
 import app.tuxguitar.song.factory.TGFactory;
 import app.tuxguitar.song.models.TGBeat;
+import app.tuxguitar.song.models.TGDivisionType;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGMeasure;
 import app.tuxguitar.song.models.TGNote;
@@ -137,7 +138,7 @@ public class TGNoteImpl extends TGNote {
 
 	public void paintTablatureNoteValuePathMode(TGLayout layout, UIPainter painter, UIInset margin, float fromX, float fromY, boolean running) {
 		float noteSize = (layout.getStringSpacing() - 2f);
-		float noteWidth = (this.getEffect().isDeadNote() ? 6f * layout.getScale() : TGNumberPainter.getDigitsWidth(getValue(), noteSize));
+		float noteWidth = (this.getEffect().isDeadNote() ? 6f * layout.getScale() : TGNumberPainter.getLabelWidth(layout.getFretLabelFormatter().format(getValue()), noteSize));
 		float ghostWidth = (this.getEffect().isGhostNote() ? 3f * layout.getScale() : 0f);
 
 		margin.setTop(noteSize / 2f);
@@ -156,7 +157,7 @@ public class TGNoteImpl extends TGNote {
 
 			painter.closePath();
 		} else {
-			TGNumberPainter.paintDigits(getValue(), painter, fromX - (margin.getLeft() - ghostWidth), fromY - margin.getTop(), noteSize);
+			TGNumberPainter.paintLabel(layout.getFretLabelFormatter().format(getValue()), painter, fromX - (margin.getLeft() - ghostWidth), fromY - margin.getTop(), noteSize);
 		}
 
 		if( this.getEffect().isGhostNote() ) {
@@ -185,7 +186,7 @@ public class TGNoteImpl extends TGNote {
 	public void paintTablatureNoteValueTextMode(TGLayout layout, UIPainter painter, UIInset margin, float fromX, float fromY, boolean running) {
 		layout.setTabNoteFontStyle(painter, running);
 
-		String label = this.getNoteLabel(this);
+		String label = this.getNoteLabel(layout, this);
 		float fmWidth = painter.getFMWidth(label);
 		float fmTopLine = painter.getFMTopLine();
 		float fmMiddleLine = painter.getFMMiddleLine();
@@ -276,6 +277,7 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, x + (6f * scale), (y1 + ((y2 - y1) / 2) + posy - (4f * scale)) / 2f);
 					}
 				}
 			}
@@ -423,6 +425,7 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, x + xMove + (6f * layoutScale), tpY - (4f * layoutScale));
 					}
 				}else{
 
@@ -452,9 +455,19 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, tpX + (6f * layoutScale), tpY - (4f * layoutScale));
 					}
 				}
 			}
+		}
+	}
+
+	// tremolo picking in tuplets (e.g. triplets): paint division type next to the slashes
+	private void paintTremoloPickingDivision(TGLayout layout, UIPainter painter, float x, float y) {
+		TGDivisionType divisionType = getEffect().getTremoloPicking().getDuration().getDivision();
+		if (!divisionType.isEqual(TGDivisionType.NORMAL)) {
+			layout.setDivisionTypeStyle(painter);
+			painter.drawString(Integer.toString(divisionType.getEnters()), x, y + painter.getFMMiddleLine());
 		}
 	}
 
@@ -659,8 +672,35 @@ public class TGNoteImpl extends TGNote {
 	}
 
 	public float getEffectWidth(TGLayout layout) {
-		if (getEffect().isBend()) return getBendWidth(layout, getEffect().getBend());
-		return(0.0f);
+		float width = getTabLabelExtraWidth(layout);
+		if (getEffect().isBend()) width = Math.max(width, getBendWidth(layout, getEffect().getBend()));
+		return width;
+	}
+
+	/**
+	 * Extra horizontal room needed when a formatted tab label (e.g. "12.3") is wider
+	 * than the slot its duration gives it.
+	 */
+	private float getTabLabelExtraWidth(TGLayout layout) {
+		if ((layout.getStyle() & TGLayout.DISPLAY_TABLATURE) == 0) {
+			return 0f;
+		}
+		if (isTiedNote() || getEffect().isDeadNote()) {
+			return 0f;
+		}
+		String label = layout.getFretLabelFormatter().format(getValue());
+		float labelWidth = 0f;
+		if (layout.isTabNotePathRendererEnabled()) {
+			labelWidth = TGNumberPainter.getLabelWidth(label, layout.getStringSpacing() - 2f);
+		} else {
+			labelWidth = layout.getTabNoteLabelWidthEstimate(label);
+		}
+		if (getEffect().isGhostNote()) {
+			labelWidth += (6f * layout.getScale());
+		}
+		float available = layout.getDurationWidth(getVoice().getDuration());
+		float needed = (labelWidth + (6f * layout.getScale()));
+		return (needed > available ? (needed - available) : 0f);
 	}
 
 	private float getBendWidth(TGLayout layout, TGEffectBend bend) {
@@ -1015,14 +1055,14 @@ public class TGNoteImpl extends TGNote {
 		layout.fillBackground(painter, uiRectangle, getMeasureImpl().isPlaying(layout));
 	}
 
-	public String getNoteLabel(TGNote note) {
+	public String getNoteLabel(TGLayout layout, TGNote note) {
 		String label = null;
 		if( note.isTiedNote()) {
 			label = "L";
 		} else if(note.getEffect().isDeadNote()) {
 			label = "X";
 		} else {
-			label = Integer.toString(note.getValue());
+			label = layout.getFretLabelFormatter().format(note.getValue());
 		}
 		return (note.getEffect().isGhostNote() ? "(" + label + ")" : label);
 	}

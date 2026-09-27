@@ -12,37 +12,57 @@ import app.tuxguitar.song.models.TGScale;
  * - evaluation of presence of alterations, accidentals
  * - addition of interval to note
  *
+ * Pitches are 17-EDO steps, named in Superpyth notation (chain of fifths):
+ * - a whole tone (C-D) is 3 steps, a diatonic semitone (E-F, B-C) is 1 step
+ * - a sharp raises by 2 steps, a flat lowers by 2 steps, so C# is one step above Db
+ * - the 17 pitch classes are C Db C# D Eb D# E F Gb F# G Ab G# A Bb A# B
+ * - 4 pitch classes have a second name: Db = B#, D# = Fb, Gb = E#, A# = Cb
+ *   the second name is used when it belongs to the key signature, or as the "alternative enharmonic" of a note
+ *
  * Conventions:
  * - note "index" is an integer in the range [0..6], 0=C, 1=D, 2=E, 3=F, 4=G, 5=A, 6=B
- * - "midiNote" corresponds to note pitch as defined by general midi, midiNote 69 = 440 Hz
+ * - "midiNote" is the midi key of the note, one key per 17-EDO step, midiNote 69 = A4 = 440 Hz, midiNote 56 = C4
  * - octave number follows general midi convention: in octave 4, A = 440Hz
  * - keySignature is encoded as everywhere in TuxGuitar: 0 = all naturals, 1 to 7 = 1 to 7 sharps, 8 to 15 = 1 to 7 flats
  * - alteration can be NATURAL, SHARP, FLAT
- *   e.g. with keySignature 2 sharps, alteration(D#/Eb) = SHARP, alteration(natural F) = NATURAL, alteration(C#/Db) = SHARP
+ *   e.g. alteration(C#) = SHARP, alteration(Db) = FLAT, alteration(F) = NATURAL
  * - accidental can be NONE, NATURAL, SHARP, FLAT
- *   e.g. with keySignature 2 sharps, accidental(D#/Eb) = SHARP, accidental(natural F) = NATURAL, accidental(C#/Db) = NONE
+ *   e.g. with keySignature 2 sharps, accidental(D#) = SHARP, accidental(natural F) = NATURAL, accidental(C#) = NONE
  */
 
 
 public class TGMusicKeyUtils {
 
-	public static final int MIN_MIDI_NOTE = 12;		// C0
-	public static final int MAX_MIDI_NOTE = 127;	// G9, 7-bits limitation
+	public static final int STEPS_PER_OCTAVE = 17;
+	// number of steps of a sharp or a flat
+	public static final int ALTERATION_STEPS = 2;
+	public static final int C4_KEY = 56;
 
-	// as far as possible do not use these constants, prefer using methods in this class
+	public static final int MIN_MIDI_NOTE = 0;		// G#0
+	public static final int MAX_MIDI_NOTE = 127;	// D8, 7-bits limitation
+
+	// 12-EDO names, only used by tools which are still 12-EDO (chords, scales)
 	public static final String sharpKeyNames[] = new String[] {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 	public static final String flatKeyNames[] = new String[] {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
 
-	// notes indexes
+	// steps from C of the note indexes
+	private static final int[] naturalSteps = {0, 3, 6, 7, 10, 13, 16};
+	// default spelling of the 17 pitch classes: C Db C# D Eb D# E F Gb F# G Ab G# A Bb A# B
+	private static final int[] indexes =     {0, 1, 0, 1, 2, 1, 2, 3, 4, 3, 4, 5, 4, 5, 6, 5, 6};
+	private static final int[] alterations = {0,-1, 1, 0,-1, 1, 0, 0,-1, 1, 0,-1, 1, 0,-1, 1, 0};
+	// pitch classes with a second name: B#, Fb, E#, Cb
+	private static final int PITCH_CLASS_B_SHARP = 1;
+	private static final int PITCH_CLASS_F_FLAT = 5;
+	private static final int PITCH_CLASS_E_SHARP = 8;
+	private static final int PITCH_CLASS_C_FLAT = 15;
+
+	// 12-EDO notes indexes, only used to guess a key signature from a (12-EDO) scale
 	private static final int[] indexesSharp =  {0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6};
 	private static final int[] indexes6Sharp = {0, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6};	// E#
 	private static final int[] indexes7Sharp = {6, 0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6};	// E#, B#
 	private static final int[] indexesFlat =   {0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6};
 	private static final int[] indexes6Flat =  {0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 0};	// Cb
 	private static final int[] indexes7Flat =  {0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6, 0};	// Cb, Fb
-	// which index table to consider, depending from signatureKey
-	// so that tableIndex[keySignature] corresponds to the correct indexesXXX array
-	// keySignature 0..5 -> indexesSharp, 6 -> indexes6Sharp, etc
 	private static final int[][] tableIndex = {indexesSharp, indexes6Sharp, indexes7Sharp, indexesFlat, indexes6Flat, indexes7Flat};
 	private static final int[] indexKeySignature = {0,0,0,0,0,0,1,2,3,3,3,3,3,4,5};
 	// order of sharps (note indexes) FCGDAEB
@@ -57,22 +77,56 @@ public class TGMusicKeyUtils {
 	public static final int SHARP = 2;
 	public static final int FLAT = 3;
 
-	private static boolean naturalNote[] = new boolean[] {true, false, true, false, true, true, false, true, false, true, false, true};
+	private static boolean isValidNote(int midiNote) {
+		return (midiNote >= MIN_MIDI_NOTE && midiNote <= MAX_MIDI_NOTE);
+	}
+
+	private static boolean isValidKeySignature(int keySignature) {
+		return (keySignature >= 0 && keySignature <= 14);
+	}
+
+	private static int pitchClass(int midiNote) {
+		return Math.floorMod(midiNote - C4_KEY, STEPS_PER_OCTAVE);
+	}
+
+	// true if the second name of the pitch class belongs to the key signature
+	private static boolean isSecondNameInKeySignature(int pitchClass, int keySignature) {
+		switch (pitchClass) {
+			case PITCH_CLASS_E_SHARP:
+				return (keySignature == 6 || keySignature == 7);
+			case PITCH_CLASS_B_SHARP:
+				return (keySignature == 7);
+			case PITCH_CLASS_C_FLAT:
+				return (keySignature == 13 || keySignature == 14);
+			case PITCH_CLASS_F_FLAT:
+				return (keySignature == 14);
+			default:
+				return false;
+		}
+	}
+
+	private static boolean hasSecondName(int pitchClass) {
+		return (pitchClass == PITCH_CLASS_B_SHARP || pitchClass == PITCH_CLASS_F_FLAT
+			|| pitchClass == PITCH_CLASS_E_SHARP || pitchClass == PITCH_CLASS_C_FLAT);
+	}
+
+	private static boolean isSecondName(int midiNote, int keySignature, boolean altEnharmonic) {
+		int pitchClass = pitchClass(midiNote);
+		return (hasSecondName(pitchClass) && (isSecondNameInKeySignature(pitchClass, keySignature) != altEnharmonic));
+	}
 
 	// ----- "default" note name and octave: without considering keySignature -------
 
-	// midi note name, without octave, sharp alterations
-	// e.g. 70 -> "A#"
+	// midi note name, without octave
+	// e.g. 71 -> "A#", 70 -> "Bb"
 	public static String sharpNoteName(int midiNote) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		return sharpKeyNames[midiNote % 12];
+		return noteName(midiNote, 0);
 	}
 
-	// midi note name, without octave, flat alterations
-	// e.g. 70 -> "Bb"
+	// midi note name, without octave
+	// in 17-EDO sharps and flats are different pitches, so this is the same name as sharpNoteName
 	public static String flatNoteName(int midiNote) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		return flatKeyNames[midiNote % 12];
+		return noteName(midiNote, 0);
 	}
 
 	// note octave
@@ -81,95 +135,59 @@ public class TGMusicKeyUtils {
 		return noteOctave(midiNote,0);
 	}
 
-	// midi note name, with octave, sharp alterations
-	// e.g. 70 -> "A#4"
+	// midi note name, with octave
+	// e.g. 71 -> "A#4"
 	public static String sharpNoteFullName(int midiNote) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		return sharpNoteName(midiNote) + String.valueOf(noteOctave(midiNote));
+		return noteFullName(midiNote, 0);
 	}
 
-	// returns true if midi note in [A,B,C,D,E,F,G], else false (if A#/Bb, etc)
-	// don't use this method if keySignature needs to be considered (e.g. "C" could in fact be "B#")
+	// returns true if midi note in [A,B,C,D,E,F,G], else false (if A#, Bb, etc)
+	// don't use this method if keySignature needs to be considered (e.g. "Db" could in fact be "B#")
 	public static boolean isNaturalNote(int midiNote) {
-		return naturalNote[midiNote % 12];
+		return (alterations[pitchClass(midiNote)] == 0);
 	}
 
 	// ----- note name and octave: considering keySignature -------
 
 	// midi note name, with octave, considering key signature
-	// e.g. 70 -> "A#4" if key signature = 0 or n sharps / -> "Gb4" if key signature = 1 or n flats
+	// e.g. 64 -> "Gb4", or "E#4" if key signature = 6 or 7 sharps
 	public static String noteFullName(int midiNote, int keySignature) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		if (keySignature<0 || keySignature>14) return null;
+		if (!isValidNote(midiNote) || !isValidKeySignature(keySignature)) return null;
 		return noteName(midiNote, keySignature) + String.valueOf(noteOctave(midiNote, keySignature));
 	}
 
 	// midi note name, without octave, considering key signature
-	// e.g. 70 -> "A#" if key signature = 0 or n sharps / -> "Gb" if key signature = 1 or n flats
+	// e.g. 64 -> "Gb", or "E#" if key signature = 6 or 7 sharps
 	public static String noteName(int midiNote, int keySignature) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		if (keySignature<0 || keySignature>14) return null;
-		int alteration = noteAlteration(midiNote, keySignature);
-		String alterationString = alteration==SHARP ? "#" : (alteration == FLAT ? "b" : "");
-		return noteShortName(midiNote, keySignature) + alterationString;
+		return noteName(midiNote, keySignature, false);
 	}
 
 	// midi note short name, without alteration, without octave, considering key signature
-	// e.g. 70 -> "A" if key signature = 0 or n sharps / -> "G" if key signature = 1 or n flats
+	// e.g. 64 -> "G", or "E" if key signature = 6 or 7 sharps
 	public static String noteShortName(int midiNote, int keySignature) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return null;
-		if (keySignature<0 || keySignature>14) return null;
-		return names[noteIndex(midiNote, keySignature)];
+		return noteShortName(midiNote, keySignature, false);
 	}
 
 	// midi note octave, considering keySignature
-	// because C4 == B#3, and Cb4 == B3
+	// because B#3 is one step above C4, and Cb4 is one step below B3
 	public static int noteOctave(int midiNote, int keySignature) {
-		if (midiNote < MIN_MIDI_NOTE || midiNote > MAX_MIDI_NOTE) return 0;
-		if (keySignature < 0 || keySignature > 14) return 0;
-
-		int octave = (midiNote/12) - 1;
-		// B#?
-		if (keySignature == 7 && (midiNote % 12) == 0 ) {
-			octave --;
-		}
-		// Cb?
-		else if (keySignature>=13 && (midiNote % 12) == 11 ) {
-			octave++;
-		}
-		return octave;
+		return noteOctave(midiNote, keySignature, false);
 	}
 
 	// midi note index, considering keySignature
 	public static int noteIndex(int midiNote, int keySignature) {
-		if (keySignature<0 || keySignature>14) return 0;
-		return tableIndex[indexKeySignature[keySignature]][midiNote%12];
+		return noteIndex(midiNote, keySignature, false);
 	}
 
-	// midi note alteration: flat, natural, sharp (sharp of flat is deduced from keySignature)
+	// midi note alteration: flat, natural, sharp
 	public static int noteAlteration(int midiNote, int keySignature) {
-		int alteration = NATURAL;
-		int index = noteIndex(midiNote, keySignature);
-		int indexFlat = noteIndex(midiNote, 8);
-		if ((7 + indexFlat - index) % 7 == 1) {
-			alteration = SHARP;
-		}
-		else {
-			int indexSharp = noteIndex(midiNote, 0);
-			if ((7 + indexSharp - index) %7 == 6) {
-				alteration = FLAT;
-			}
-		}
-		return alteration;
+		return noteAlteration(midiNote, keySignature, false);
 	}
 
 	// midi note accidental, considering keySignature: none, flat, natural, sharp
 	// returns none if note is altered with an alteration present in keySignature
 	public static int noteAccidental(int midiNote, int keySignature) {
-		int alteration = noteAlteration(midiNote, keySignature);
-		// compare with expected alteration considering keySignature
-		int index = noteIndex(midiNote, keySignature);
-		return (alteration == noteIndexAlteration(index, keySignature)) ? NONE : alteration;
+		return noteAccidental(midiNote, keySignature, false);
 	}
 
 	// alteration of note index, considering key signature
@@ -195,51 +213,58 @@ public class TGMusicKeyUtils {
 	}
 
 	// ----- note name and octave: considering keySignature and alternative enharmonic representation -------
+	// only B#, Fb, E#, Cb have an alternative, other notes are not changed
 
 	public static String noteName(int midiNote, int keySignature, boolean altEnharmonic) {
-		String normalName = noteName(midiNote, keySignature);
-		if (!altEnharmonic) return normalName;
-		String name = noteName(midiNote, 7);
-		if (!name.equals(normalName)) return name;
-		return noteName(midiNote, 14);
+		if (!isValidNote(midiNote) || !isValidKeySignature(keySignature)) return null;
+		int alteration = noteAlteration(midiNote, keySignature, altEnharmonic);
+		String alterationString = alteration==SHARP ? "#" : (alteration == FLAT ? "b" : "");
+		return noteShortName(midiNote, keySignature, altEnharmonic) + alterationString;
 	}
 	public static String noteShortName(int midiNote, int keySignature, boolean altEnharmonic) {
-		String normalShortName = noteShortName(midiNote, keySignature);
-		if (!altEnharmonic) return normalShortName;
-		String shortName = noteShortName(midiNote, 7);
-		if (!shortName.equals(normalShortName)) return shortName;
-		return noteShortName(midiNote, 14);
+		if (!isValidNote(midiNote) || !isValidKeySignature(keySignature)) return null;
+		return names[noteIndex(midiNote, keySignature, altEnharmonic)];
 	}
 	public static int noteOctave(int midiNote, int keySignature, boolean altEnharmonic) {
-		int normalOctave = noteOctave(midiNote, keySignature);
-		if (!altEnharmonic) return normalOctave;
-		int octave = noteOctave(midiNote, 7);
-		if (octave != normalOctave) return octave;
-		return noteOctave(midiNote,14);
+		if (!isValidNote(midiNote) || !isValidKeySignature(keySignature)) return 0;
+		int octave = Math.floorDiv(midiNote - C4_KEY, STEPS_PER_OCTAVE) + 4;
+		if (isSecondName(midiNote, keySignature, altEnharmonic)) {
+			int pitchClass = pitchClass(midiNote);
+			if (pitchClass == PITCH_CLASS_B_SHARP) {
+				octave--;
+			}
+			else if (pitchClass == PITCH_CLASS_C_FLAT) {
+				octave++;
+			}
+		}
+		return octave;
 	}
 	public static int noteIndex(int midiNote, int keySignature, boolean altEnharmonic) {
-		int normalIndex = noteIndex(midiNote, keySignature);
-		if (!altEnharmonic) return normalIndex;
-		int index = noteIndex(midiNote, 7);
-		if (index != normalIndex) return index;
-		return noteIndex(midiNote, 14);
+		if (!isValidKeySignature(keySignature)) return 0;
+		int pitchClass = pitchClass(midiNote);
+		if (isSecondName(midiNote, keySignature, altEnharmonic)) {
+			switch (pitchClass) {
+				case PITCH_CLASS_B_SHARP: return 6;
+				case PITCH_CLASS_F_FLAT: return 3;
+				case PITCH_CLASS_E_SHARP: return 2;
+				default: return 0;	// Cb
+			}
+		}
+		return indexes[pitchClass];
+	}
+	public static int noteAlteration(int midiNote, int keySignature, boolean altEnharmonic) {
+		int pitchClass = pitchClass(midiNote);
+		if (isSecondName(midiNote, keySignature, altEnharmonic)) {
+			return ((pitchClass == PITCH_CLASS_B_SHARP || pitchClass == PITCH_CLASS_E_SHARP) ? SHARP : FLAT);
+		}
+		int alteration = alterations[pitchClass];
+		return (alteration > 0 ? SHARP : (alteration < 0 ? FLAT : NATURAL));
 	}
 	public static int noteAccidental(int midiNote, int keySignature, boolean altEnharmonic) {
-		int normalAccidental = noteAccidental(midiNote, keySignature);
-		if (!altEnharmonic) {
-			return normalAccidental;
-		}
-		int accidental;
-		int index = noteIndex(midiNote, keySignature);
-		if (noteIndex(midiNote,7) != index) {
-			accidental = noteAlteration(midiNote, 7);
-			return (accidental == NONE ? SHARP : accidental);
-		}
-		else if (noteIndex(midiNote,14) != index) {
-			accidental = noteAlteration(midiNote, 14);
-			return (accidental == NONE ? FLAT : accidental);
-		}
-		return normalAccidental;
+		int alteration = noteAlteration(midiNote, keySignature, altEnharmonic);
+		// compare with expected alteration considering keySignature
+		int index = noteIndex(midiNote, keySignature, altEnharmonic);
+		return (alteration == noteIndexAlteration(index, keySignature)) ? NONE : alteration;
 	}
 
 		// ----- additions of offset -------
@@ -260,8 +285,24 @@ public class TGMusicKeyUtils {
 
 	// (noteIndex=5 (A), octave=4) -> midi note 69
 	public static int midiNote(int noteIndex, int octave) {
-		int semiTonesToC[] = {0,2,4,5,7,9,11};
-		return 12*(1+octave) + semiTonesToC[noteIndex];
+		return C4_KEY + STEPS_PER_OCTAVE*(octave - 4) + naturalSteps[noteIndex];
+	}
+
+	// ----- key signature of a scale (scales are 12-EDO) -------
+
+	private static int scaleNoteIndex(int value, int keySignature) {
+		return tableIndex[indexKeySignature[keySignature]][value % 12];
+	}
+
+	private static int scaleNoteAlteration(int value, int keySignature) {
+		int index = scaleNoteIndex(value, keySignature);
+		if ((7 + scaleNoteIndex(value, 8) - index) % 7 == 1) {
+			return SHARP;
+		}
+		if ((7 + scaleNoteIndex(value, 0) - index) % 7 == 6) {
+			return FLAT;
+		}
+		return NATURAL;
 	}
 
 	// returns -1 if invalid:
@@ -275,14 +316,15 @@ public class TGMusicKeyUtils {
 		int nbAccidentals = 0;
 
 		for (int i=0; i<12; i++) {
-			int value = MIN_MIDI_NOTE + scale.getKey() + i;
+			int value = 12 + scale.getKey() + i;
 			if (scale.getNote(value)) {
-				String shortName = noteShortName(value, keySignature);
+				int index = scaleNoteIndex(value, keySignature);
+				String shortName = names[index];
 				if (notesNames.contains(shortName)) {
 					return -1;
 				}
 				notesNames.add(shortName);
-				if ( noteAccidental(value, keySignature) != NONE ) {
+				if ( scaleNoteAlteration(value, keySignature) != noteIndexAlteration(index, keySignature) ) {
 					nbAccidentals++;
 				}
 			}

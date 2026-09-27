@@ -78,6 +78,7 @@ public class TGConfigDefaults{
 		loadProperty(properties, TGConfigKeys.COLOR_LINE_INVALID, "205,0,0");
 		loadProperty(properties, TGConfigKeys.COLOR_SCORE_NOTE, "64,64,64");
 		loadProperty(properties, TGConfigKeys.COLOR_TAB_NOTE, "64,64,64");
+		loadProperty(properties, TGConfigKeys.EDO_LABELS_DOTS, "");
 		loadProperty(properties, TGConfigKeys.COLOR_PLAY_NOTE, "255,0,0");
 		loadProperty(properties, TGConfigKeys.COLOR_SELECTION, "116,152,208");
 		loadProperty(properties, TGConfigKeys.COLOR_CARET_CURRENT_VOICE, "5,5,5");

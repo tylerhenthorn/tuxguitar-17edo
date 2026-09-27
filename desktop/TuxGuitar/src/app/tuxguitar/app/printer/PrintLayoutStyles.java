@@ -1,5 +1,6 @@
 package app.tuxguitar.app.printer;
 
+import app.tuxguitar.app.system.config.TGFretLabelConfig;
 import app.tuxguitar.app.system.config.TGConfigKeys;
 import app.tuxguitar.app.system.config.TGConfigManager;
 import app.tuxguitar.graphics.control.TGLayoutStyles;
@@ -78,6 +79,7 @@ public class PrintLayoutStyles extends TGLayoutStyles {
 		this.setLoopSMarkerColor(config.getColorModelConfigValue(TGConfigKeys.COLOR_LOOP_S_MARKER));
 		this.setLoopEMarkerColor(config.getColorModelConfigValue(TGConfigKeys.COLOR_LOOP_E_MARKER));
 		this.setMeasureNumberColor(config.getColorModelConfigValue(TGConfigKeys.COLOR_MEASURE_NUMBER));
+		this.setFretLabelFormatter(TGFretLabelConfig.createFormatter(config));
 		this.setForegroundColor(DEFAULT_FOREGROUND_COLOR);
 		this.setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
 	}

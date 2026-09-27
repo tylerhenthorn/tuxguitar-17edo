@@ -15,6 +15,7 @@ import app.tuxguitar.app.view.dialog.settings.items.MainOption;
 import app.tuxguitar.app.view.dialog.settings.items.SkinOption;
 import app.tuxguitar.app.view.dialog.settings.items.SoundOption;
 import app.tuxguitar.app.view.dialog.settings.items.StylesOption;
+import app.tuxguitar.app.view.dialog.settings.items.EdoLabelsOption;
 import app.tuxguitar.app.view.dialog.settings.items.TGSettingsOption;
 import app.tuxguitar.app.view.util.TGCursorController;
 import app.tuxguitar.app.view.util.TGDialogUtil;
@@ -126,6 +127,7 @@ public class TGSettingsEditor{
 		this.options = new ArrayList<TGSettingsOption>();
 		this.options.add(new MainOption(this, toolBar, parent));
 		this.options.add(new StylesOption(this, toolBar, parent));
+		this.options.add(new EdoLabelsOption(this, toolBar, parent));
 		this.options.add(new LanguageOption(this, toolBar, parent));
 		this.options.add(new SkinOption(this, toolBar, parent));
 		this.options.add(new SoundOption(this, toolBar, parent));

@@ -57,19 +57,19 @@ public class SWTMouseListenerManager implements MouseListener {
 
 	public void mouseDoubleClick(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.mouseDoubleClickListener.onMouseDoubleClick(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.mouseDoubleClickListener.onMouseDoubleClick(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 
 	public void mouseDown(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.mouseDownListener.onMouseDown(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.mouseDownListener.onMouseDown(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 
 	public void mouseUp(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.mouseUpListener.onMouseUp(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.mouseUpListener.onMouseUp(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 }

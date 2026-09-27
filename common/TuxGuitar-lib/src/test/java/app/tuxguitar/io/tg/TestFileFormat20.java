@@ -560,6 +560,51 @@ public class TestFileFormat20 {
 	}
 
 	@Test
+	public void testTremoloPickingTriplet() throws IOException {
+		TGFactory factory = new TGFactory();
+		TGSong song = readSong("reference_20.tg", true).getSong();
+		// find first note
+		TGNote note = null;
+		Iterator<TGMeasure> measures = song.getTrack(0).getMeasures();
+		while (note == null && measures.hasNext()) {
+			for (TGBeat beat : measures.next().getBeats()) {
+				if (note == null && !beat.getVoice(0).getNotes().isEmpty()) {
+					note = beat.getVoice(0).getNote(0);
+				}
+			}
+		}
+		assertNotNull(note);
+		int string = note.getString();
+		long start = note.getVoice().getBeat().getStart();
+		int measureNumber = note.getVoice().getBeat().getMeasure().getNumber();
+		TGEffectTremoloPicking tremoloPicking = factory.newEffectTremoloPicking();
+		tremoloPicking.getDuration().setValue(TGDuration.SIXTEENTH);
+		tremoloPicking.getDuration().getDivision().copyFrom(TGDivisionType.TRIPLET);
+		note.getEffect().setTremoloPicking(tremoloPicking);
+
+		byte[] bufferXml = saveToXml(song, factory);
+		assertTrue(validatesSchema(new ByteArrayInputStream(bufferXml), false));
+		song = readFromXml(bufferXml, factory);
+
+		note = null;
+		for (TGBeat beat : song.getTrack(0).getMeasure(measureNumber - 1).getBeats()) {
+			if (beat.getStart() == start) {
+				for (TGNote n : beat.getVoice(0).getNotes()) {
+					if (n.getString() == string) {
+						note = n;
+					}
+				}
+			}
+		}
+		assertNotNull(note);
+		assertTrue(note.getEffect().isTremoloPicking());
+		TGDuration duration = note.getEffect().getTremoloPicking().getDuration();
+		assertEquals(TGDuration.SIXTEENTH, duration.getValue());
+		assertTrue(duration.getDivision().isEqual(TGDivisionType.TRIPLET));
+		assertEquals(TGDuration.QUARTER_TIME / 6, duration.getTime());
+	}
+
+	@Test
 	public void testInvalidArchiveContent() throws IOException {
 		boolean caught = false;
 		TGSongReaderHandle handle = null;

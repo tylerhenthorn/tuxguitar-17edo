@@ -7,8 +7,10 @@ import app.tuxguitar.app.action.TGActionProcessorListener;
 import app.tuxguitar.app.action.impl.caret.TGGoLeftAction;
 import app.tuxguitar.app.action.impl.caret.TGGoRightAction;
 import app.tuxguitar.app.action.impl.caret.TGMoveToAction;
-import app.tuxguitar.app.action.impl.tools.TGOpenScaleDialogAction;
 import app.tuxguitar.app.system.config.TGConfigKeys;
+import app.tuxguitar.app.system.config.TGConfigManager;
+import app.tuxguitar.app.system.config.TGFretLabelConfig;
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
 import app.tuxguitar.app.system.icons.TGIconManager;
 import app.tuxguitar.app.transport.TGTransport;
 import app.tuxguitar.app.ui.TGApplication;
@@ -27,8 +29,6 @@ import app.tuxguitar.player.base.MidiPlayer;
 import app.tuxguitar.song.models.TGBeat;
 import app.tuxguitar.song.models.TGMeasure;
 import app.tuxguitar.song.models.TGNote;
-import app.tuxguitar.song.models.TGScale;
-import app.tuxguitar.song.models.TGString;
 import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.song.models.TGVoice;
 import app.tuxguitar.ui.UIFactory;
@@ -58,6 +58,7 @@ import app.tuxguitar.util.TGMusicKeyUtils;
 public class TGFretBoard {
 
 	public static final int MAX_FRETS = 24;
+	public static final int MAX_FRETS_LIMIT = 48;
 	public static final int TOP_SPACING = 10;
 	public static final int BOTTOM_SPACING = 10;
 
@@ -70,8 +71,6 @@ public class TGFretBoard {
 	private UIPanel control;
 	private UIPanel toolComposite;
 	private UIImageView durationLabel;
-	private UILabel scaleName;
-	private UIButton scale;
 	private UIButton goLeft;
 	private UIButton goRight;
 	private UIButton increment;
@@ -85,6 +84,7 @@ public class TGFretBoard {
 	private int[] frets;
 	private int[] strings;
 	private float fretSpacing;
+	private float layoutWidth;
 	private boolean changes;
 	private UISize lastSize;
 	private int stringSpacing;
@@ -170,16 +170,6 @@ public class TGFretBoard {
 
 		// separator
 		this.createToolSeparator(uiFactory, ++column);
-
-		// scale
-		this.scale = uiFactory.createButton(this.toolComposite);
-		this.scale.setText(TuxGuitar.getProperty("scale"));
-		this.scale.addSelectionListener(new TGActionProcessorListener(this.context, TGOpenScaleDialogAction.NAME));
-		this.createToolItemLayout(this.scale, ++column);
-
-		// scale name
-		this.scaleName = uiFactory.createLabel(this.toolComposite);
-		this.createToolItemLayout(this.scaleName, ++column, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, false);
 
 		// fretboard height
 		this.smaller = uiFactory.createButton(this.toolComposite);
@@ -271,21 +261,15 @@ public class TGFretBoard {
 		}
 	}
 
-	private void loadScaleName() {
-		int scaleKeyIndex = TuxGuitar.getInstance().getScaleManager().getSelectionKeyIndex();
-		int scaleIndex = TuxGuitar.getInstance().getScaleManager().getScaleIndex();
-		String key = TuxGuitar.getInstance().getScaleManager().getKeyName( scaleKeyIndex );
-		String name = TuxGuitar.getInstance().getScaleManager().getScaleName( scaleIndex );
-		this.scaleName.setText( ( key != null && name != null ) ? ( key + " - " + name ) : "" );
-	}
-
 	private void calculateFretSpacing(float width) {
-		this.fretSpacing = (width / MAX_FRETS);
+		int fretCount = this.getFretCount();
+		this.layoutWidth = width;
+		this.fretSpacing = (width / fretCount);
 		int aux = 0;
-		for (int i = 0; i < MAX_FRETS; i++) {
+		for (int i = 0; i < fretCount; i++) {
 			aux += (i * 2);
 		}
-		this.fretSpacing += (aux / MAX_FRETS) + 2;
+		this.fretSpacing += (aux / fretCount) + 2;
 	}
 
 	private void disposeFretBoardImage(){
@@ -295,19 +279,16 @@ public class TGFretBoard {
 	}
 
 	protected void initFrets(int fromX) {
-		this.frets = new int[MAX_FRETS];
-		int nextX = fromX;
+		this.frets = new int[this.getFretCount()];
 		int direction = this.getDirection(this.config.getDirection());
-		if (direction == TGFretBoardConfig.DIRECTION_RIGHT) {
-			for (int i = 0; i < this.frets.length; i++) {
-				this.frets[i] = nextX;
-				nextX += (this.fretSpacing - ((i + 1) * 2));
-			}
-		} else if (direction == TGFretBoardConfig.DIRECTION_LEFT) {
-			for (int i = this.frets.length - 1; i >= 0; i--) {
-				this.frets[i] = nextX;
-				nextX += (this.fretSpacing - (i * 2));
-			}
+		// real fret geometry: fret n sits at L - L / 2^(n / EDO), scaled so the last fret ends at the right edge
+		int edo = TGFretLabelFormatter.EDO;
+		int last = (this.frets.length - 1);
+		float span = Math.max(1f, this.layoutWidth - (2f * fromX));
+		float scaleLength = (float) (span / (1d - Math.pow(2d, -(double) last / (double) edo)));
+		for (int i = 0; i < this.frets.length; i++) {
+			float position = (float) (scaleLength * (1d - Math.pow(2d, -(double) i / (double) edo)));
+			this.frets[i] = Math.round(direction == TGFretBoardConfig.DIRECTION_LEFT ? (fromX + span - position) : (fromX + position));
 		}
 	}
 
@@ -349,7 +330,7 @@ public class TGFretBoard {
 			float clientWidth = childArea.getWidth();
 			float clientHeight = childArea.getHeight();
 
-			if( this.lastSize.getWidth() != clientWidth || hasChanges() ){
+			if( this.lastSize.getWidth() != clientWidth || hasChanges() || this.frets.length != this.getFretCount() ){
 				this.layout(clientWidth);
 			}
 
@@ -404,20 +385,34 @@ public class TGFretBoard {
 				painterBuffer.closePath();
 			}
 
-			// pinto la escala
-			paintScale(painterBuffer);
-
 			painterBuffer.dispose();
 		}
 		painter.drawImage(this.fretBoard,0,0);
 	}
 
+	private TGFretLabelFormatter getFretLabelFormatter() {
+		return TGFretLabelConfig.createFormatter(TGConfigManager.getInstance(this.context));
+	}
+
+	/** Frets to draw: two octaves. */
+	private int getFretCount() {
+		return Math.min(2 * TGFretLabelFormatter.EDO, MAX_FRETS_LIMIT);
+	}
+
 	private void paintFretPoints(UIPainter painter, int fretIndex) {
 		painter.setBackground(this.config.getColorFretPoint());
 		if ((fretIndex + 1) < this.frets.length) {
-			int fret = ((fretIndex + 1) % 12);
+			int fretNumber = (fretIndex + 1);
+			boolean octaveDot = false;
+			boolean singleDot = false;
+			TGFretLabelFormatter formatter = this.getFretLabelFormatter();
+			octaveDot = (fretNumber % TGFretLabelFormatter.EDO == 0);
+			for (int dotFret : formatter.getDotFrets()) {
+				singleDot |= (dotFret == fretNumber);
+			}
+			singleDot &= !octaveDot;
 			painter.setLineWidth(10);
-			if (fret == 0) {
+			if (octaveDot) {
 				int size = getOvalSize();
 				int x = this.frets[fretIndex] + ((this.frets[fretIndex + 1] - this.frets[fretIndex]) / 2);
 				int y1 = this.strings[0] + ((this.strings[this.strings.length - 1] - this.strings[0]) / 2) - this.stringSpacing;
@@ -426,7 +421,7 @@ public class TGFretBoard {
 				painter.addCircle(x, y1, size);
 				painter.addCircle(x, y2, size);
 				painter.closePath();
-			} else if (fret == 3 || fret == 5 || fret == 7 || fret == 9) {
+			} else if (singleDot) {
 				int size = getOvalSize();
 				int x = this.frets[fretIndex] + ((this.frets[fretIndex + 1] - this.frets[fretIndex]) / 2);
 				int y = this.strings[0] + ((this.strings[this.strings.length - 1] - this.strings[0]) / 2);
@@ -436,42 +431,6 @@ public class TGFretBoard {
 			}
 			painter.setLineWidth(1);
 		}
-	}
-
-	private void paintScale(UIPainter painter) {
-		TGTrack track = getTrack();
-		TGScale scale = TuxGuitar.getInstance().getScaleManager().getScale();
-		int keySignature = TGMusicKeyUtils.getKeySignature(scale);
-		int tonicKey = scale.getKey();
-
-		for (int i = 0; i < this.strings.length; i++) {
-			TGString string = track.getString(i + 1);
-			for (int j = 0; j < this.frets.length; j++) {
-
-				int noteValue = string.getValue() + j;
-				if(scale.getNote(noteValue)){
-					int x = this.frets[j];
-					if(j > 0){
-						x -= ((x - this.frets[j - 1]) / 2);
-					}
-					int y = this.strings[i];
-
-					boolean isTonic = ((noteValue % 12) == tonicKey);
-					UIColor ovalColor = isTonic ? this.config.getColorTonic() : this.config.getColorScale();
-
-					if( (this.config.getStyle() & TGFretBoardConfig.DISPLAY_TEXT_SCALE) != 0 ){
-						String noteName = TGMusicKeyUtils.noteName(noteValue, keySignature);
-						UIColor textColor = isTonic ? this.config.getColorTonicText() : this.config.getColorScaleText();
-						paintKeyText(painter, textColor, ovalColor, x, y, noteName);
-					}
-					else{
-						paintKeyOval(painter, ovalColor, x, y);
-					}
-				}
-			}
-		}
-
-		painter.setForeground(this.config.getColorBackground());
 	}
 
 	private void paintNotes(UIPainter painter) {
@@ -714,8 +673,6 @@ public class TGFretBoard {
 		this.smaller.setToolTipText(TuxGuitar.getProperty("fretboard.smaller"));
 		this.bigger.setToolTipText(TuxGuitar.getProperty("fretboard.bigger"));
 		this.settings.setToolTipText(TuxGuitar.getProperty("settings"));
-		this.scale.setText(TuxGuitar.getProperty("scale"));
-		this.loadScaleName();
 		this.setChanges(true);
 		this.control.layout();
 	}
@@ -734,7 +691,6 @@ public class TGFretBoard {
 	}
 
 	public void loadScale(){
-		this.loadScaleName();
 		this.setChanges(true);
 		this.control.layout();
 	}

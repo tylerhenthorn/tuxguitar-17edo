@@ -31,6 +31,7 @@ public abstract class TGDivisionType {
 
 	// Alias for better code readability
 	public static final TGDivisionType NORMAL = DIVISION_TYPES[0];
+	public static final TGDivisionType TRIPLET = DIVISION_TYPES[1];
 
 	/**
 	 * Cantidad de Duraciones que entran en los tiempos

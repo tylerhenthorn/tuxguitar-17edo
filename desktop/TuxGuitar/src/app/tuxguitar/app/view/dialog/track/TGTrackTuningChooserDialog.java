@@ -7,6 +7,7 @@ import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.*;
+import app.tuxguitar.app.util.TGEdoNoteNames;
 import app.tuxguitar.util.TGMusicKeyUtils;
 
 public class TGTrackTuningChooserDialog {
@@ -43,11 +44,12 @@ public class TGTrackTuningChooserDialog {
 		tuningValueLabel.setText(TuxGuitar.getProperty("tuning.value") + ":");
 		panelLayout.set(tuningValueLabel, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_RIGHT, false, true);
 
+		// the list offers the note names, the spinner below edits the step value
 		final UIDropDownSelect<Integer> tuningValueControl = uiFactory.createDropDownSelect(panel);
 		tuningValueControl.addItem(new UISelectItem<Integer>(TuxGuitar.getProperty("tuning.value.select")));
 
 		for(int value = TGMusicKeyUtils.MIN_MIDI_NOTE ; value <= TGMusicKeyUtils.MAX_MIDI_NOTE ; value ++) {
-			tuningValueControl.addItem(new UISelectItem<Integer>(TGMusicKeyUtils.sharpNoteFullName(value), value));
+			tuningValueControl.addItem(new UISelectItem<Integer>(TGEdoNoteNames.fullName(TuxGuitar.getInstance().getContext(), value), value));
 		}
 
 		tuningValueControl.setSelectedValue(model != null ? model.getValue() : null);
@@ -55,13 +57,14 @@ public class TGTrackTuningChooserDialog {
 
 		// value spinner
 		UILabel tuningSpinnerLabel = uiFactory.createLabel(panel);
-		tuningSpinnerLabel.setText(TuxGuitar.getProperty("tuning.midi-note") + ":");
+		tuningSpinnerLabel.setText(TuxGuitar.getProperty("tuning.step-value") + ":");
 		panelLayout.set(tuningSpinnerLabel, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_RIGHT, false, true);
 
 		final UISpinner tuningValueSpinner = uiFactory.createSpinner(panel);
 		tuningValueSpinner.setMinimum(TGMusicKeyUtils.MIN_MIDI_NOTE);
 		tuningValueSpinner.setMaximum(TGMusicKeyUtils.MAX_MIDI_NOTE);
 		tuningValueSpinner.setValue(model != null ? model.getValue() : 0);
+		final int[] currentValue = new int[] { (model != null ? model.getValue() : -1) };
 		panelLayout.set(tuningValueSpinner, 2, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 150f, null, null);
 
 		// label
@@ -71,7 +74,7 @@ public class TGTrackTuningChooserDialog {
 
 		final UIReadOnlyTextField tuningLabelControl = uiFactory.createReadOnlyTextField(panel);
 		if( model != null ) {
-			tuningLabelControl.setText(TGMusicKeyUtils.sharpNoteName(model.getValue()));
+			tuningLabelControl.setText(TGEdoNoteNames.fullName(TuxGuitar.getInstance().getContext(), model.getValue()));
 		}
 		panelLayout.set(tuningLabelControl, 3, 2, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_FILL, true, true, 1, 1, 150f, null, null);
 
@@ -85,17 +88,19 @@ public class TGTrackTuningChooserDialog {
 					noteValue = tuningValueControl.getSelectedValue();
 					buttonOK.setEnabled(true);
 				}
-				String noteName = TGMusicKeyUtils.sharpNoteName(noteValue);
+				String noteName = TGEdoNoteNames.fullName(TuxGuitar.getInstance().getContext(), noteValue);
 				if (noteName != null) {
 					tuningLabelControl.setText(noteName);
 					tuningValueSpinner.setValue(tuningValueControl.getSelectedValue());
+					currentValue[0] = noteValue;
 				}
 			}
 		});
 		tuningValueSpinner.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
-				tuningValueControl.setSelectedValue(tuningValueSpinner.getValue());
-				tuningLabelControl.setText(TGMusicKeyUtils.sharpNoteName(tuningValueControl.getSelectedValue()));
+				currentValue[0] = tuningValueSpinner.getValue();
+				tuningValueControl.setSelectedValue(currentValue[0]);
+				tuningLabelControl.setText(TGEdoNoteNames.fullName(TuxGuitar.getInstance().getContext(), currentValue[0]));
 				buttonOK.setEnabled(true);
 			}
 		});
@@ -113,7 +118,7 @@ public class TGTrackTuningChooserDialog {
 		this.buttonOK.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
 				TGTrackTuningModel model = new TGTrackTuningModel();
-				model.setValue(tuningValueControl.getSelectedValue());
+				model.setValue(currentValue[0] >= 0 ? currentValue[0] : tuningValueControl.getSelectedValue());
 				handler.handleSelection(model);
 				dialog.dispose();
 			}

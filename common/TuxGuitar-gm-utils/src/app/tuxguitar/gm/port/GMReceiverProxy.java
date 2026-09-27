@@ -44,6 +44,10 @@ public class GMReceiverProxy implements GMReceiver {
 		}
 	}
 
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		this.receiver.sendSysex(data);
+	}
+
 	public boolean isValidChannel(int channel) {
 		return (channel >=0 && channel < 16);
 	}

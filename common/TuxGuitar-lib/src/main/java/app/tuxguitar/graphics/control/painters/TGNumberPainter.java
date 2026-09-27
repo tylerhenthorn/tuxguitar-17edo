@@ -12,6 +12,7 @@ import app.tuxguitar.ui.resource.UIPainter;
 public class TGNumberPainter {
 
 	private static final float MARGIN = 0.1f;
+	private static final float DOT_WIDTH = 0.18f;
 
 	private static final TGPaintModel[] NUMBER_MODELS = new TGPaintModel[] {
 		// 0
@@ -435,6 +436,46 @@ public class TGNumberPainter {
 
 			xMove += ((TGNumberPainter.get(digit).getWidth() * scale) + MARGIN * scale);
 		}
+	}
+
+	/**
+	 * Paints a fret label made of digits and dots (e.g. "12.3"). Digits use the
+	 * vector glyphs above; a dot is a small filled square on the baseline.
+	 */
+	public static void paintLabel(String label, UIPainter painter, float x, float y, float scale) {
+		float xMove = 0;
+		for (int i = 0; i < label.length(); i++) {
+			char c = label.charAt(i);
+			if (c >= '0' && c <= '9') {
+				int digit = (c - '0');
+				painter.initPath(UIPainter.PATH_FILL);
+				TGNumberPainter.paint(digit, painter, (x + xMove), y, scale);
+				painter.closePath();
+				xMove += ((TGNumberPainter.get(digit).getWidth() * scale) + MARGIN * scale);
+			} else {
+				float dotSize = (DOT_WIDTH * scale);
+				painter.initPath(UIPainter.PATH_FILL);
+				painter.addRectangle(x + xMove, y + scale - dotSize, dotSize, dotSize);
+				painter.closePath();
+				xMove += (dotSize + MARGIN * scale);
+			}
+		}
+	}
+
+	public static float getLabelWidth(String label, float scale) {
+		float width = 0;
+		for (int i = 0; i < label.length(); i++) {
+			char c = label.charAt(i);
+			if (width > 0) {
+				width += (MARGIN * scale);
+			}
+			if (c >= '0' && c <= '9') {
+				width += (TGNumberPainter.get(c - '0').getWidth() * scale);
+			} else {
+				width += (DOT_WIDTH * scale);
+			}
+		}
+		return width;
 	}
 
 	public static void fillDigits(int number, List<Integer> digits) {

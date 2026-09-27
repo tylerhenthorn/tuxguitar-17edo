@@ -1,5 +1,10 @@
 package app.tuxguitar.editor.action.note;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import app.tuxguitar.action.TGActionContext;
 import app.tuxguitar.document.TGDocumentContextAttributes;
 import app.tuxguitar.editor.action.TGActionBase;
@@ -8,7 +13,9 @@ import app.tuxguitar.song.managers.TGSongManager;
 import app.tuxguitar.song.models.TGBeat;
 import app.tuxguitar.song.models.TGMeasure;
 import app.tuxguitar.song.models.TGNote;
+import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.song.models.TGString;
+import app.tuxguitar.song.models.TGTrack;
 import app.tuxguitar.song.models.TGVoice;
 import app.tuxguitar.util.TGBeatRange;
 import app.tuxguitar.util.TGContext;
@@ -17,6 +24,8 @@ import app.tuxguitar.util.TGNoteRange;
 public class TGDeleteNoteOrRestAction extends TGActionBase {
 
 	public static final String NAME = "action.beat.general.delete-note-or-rest";
+
+	public static final String ATTRIBUTE_MEASURES_REMOVED = "measuresRemoved";
 
 	public TGDeleteNoteOrRestAction(TGContext context) {
 		super(context, NAME);
@@ -38,14 +47,67 @@ public class TGDeleteNoteOrRestAction extends TGActionBase {
 		else if (beats!=null && !beats.isEmpty()) {
 			TGVoice voice = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_VOICE);
 			TGString string = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_STRING);
+			List<Integer> emptyMeasures = findEmptyMeasures(context, beats.getBeats());
 			for (TGBeat beat : beats.getBeats()) {
-				removeNote(context, beat.getMeasure(), beat, voice, string.getNumber());
+				if (!emptyMeasures.contains(beat.getMeasure().getNumber())) {
+					removeNote(context, beat.getMeasure(), beat, voice, string.getNumber());
+				}
 			}
+			removeMeasures(context, emptyMeasures);
 		}
 		else if (selectedBeat!=null) {
 			TGVoice voice = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_VOICE);
 			TGString string = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_STRING);
-			removeNote(context, selectedBeat.getMeasure(), selectedBeat, voice, string.getNumber());
+			List<Integer> emptyMeasures = findEmptyMeasures(context, Collections.singletonList(selectedBeat));
+			if (emptyMeasures.isEmpty()) {
+				removeNote(context, selectedBeat.getMeasure(), selectedBeat, voice, string.getNumber());
+			}
+			removeMeasures(context, emptyMeasures);
+		}
+	}
+
+	/** Numbers of the measures touched by these beats that hold nothing but rests, in every track */
+	private List<Integer> findEmptyMeasures(TGActionContext context, List<TGBeat> beats) {
+		List<Integer> numbers = new ArrayList<Integer>();
+		TGSong song = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_SONG);
+		if (song != null) {
+			for (TGBeat beat : beats) {
+				int number = beat.getMeasure().getNumber();
+				if (!numbers.contains(number) && isEmptyMeasure(song, number)) {
+					numbers.add(number);
+				}
+			}
+		}
+		return numbers;
+	}
+
+	private boolean isEmptyMeasure(TGSong song, int number) {
+		Iterator<TGTrack> tracks = song.getTracks();
+		while (tracks.hasNext()) {
+			TGTrack track = tracks.next();
+			if (number > track.countMeasures()) {
+				return false;
+			}
+			for (TGBeat beat : track.getMeasure(number - 1).getBeats()) {
+				if (!beat.isRestBeat() || beat.isTextBeat() || beat.isChordBeat()) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private void removeMeasures(TGActionContext context, List<Integer> numbers) {
+		if (!numbers.isEmpty()) {
+			TGSong song = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_SONG);
+			Collections.sort(numbers, Collections.reverseOrder());
+			for (Integer number : numbers) {
+				// the song keeps at least one measure
+				if (song.countMeasureHeaders() > 1) {
+					getSongManager(context).removeMeasure(song, number);
+					context.setAttribute(ATTRIBUTE_MEASURES_REMOVED, Boolean.TRUE);
+				}
+			}
 		}
 	}
 	private void removeNote(TGActionContext context, TGMeasure measure, TGBeat beat, TGVoice voice, int string) {

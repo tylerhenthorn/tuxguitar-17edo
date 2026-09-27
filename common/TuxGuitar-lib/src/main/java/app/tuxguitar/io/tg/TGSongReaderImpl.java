@@ -512,6 +512,11 @@ public class TGSongReaderImpl extends TGStream implements TGSongReader {
 		TGEffectTremoloPicking picking = this.factory.newEffectTremoloPicking();
 		TGDuration duration = this.factory.newDuration();
 		duration.setValue(readAttributeInt(nodeTremoloPicking, TAG_DURATION));
+		Node nodeDivisionType = getChildNode(nodeTremoloPicking, TAG_DIVISIONTYPE);
+		if (nodeDivisionType != null) {
+			duration.getDivision().setEnters(readAttributeInt(nodeDivisionType, TAG_ENTERS));
+			duration.getDivision().setTimes(readAttributeInt(nodeDivisionType, TAG_TIMES));
+		}
 		picking.setDuration(duration);
 		note.getEffect().setTremoloPicking(picking);
 	}

@@ -157,6 +157,27 @@ public class Caret {
 		this.setChanges(true);
 	}
 
+	/**
+	 * With EDO labels on, shows "rawFret = label" next to the caret so the raw
+	 * number typed on the keyboard stays visible while editing.
+	 */
+	private void paintFretStatus(TGLayout layout, UIPainter painter, TGNote note, float x, float y) {
+		String status = (note.getValue() + " = " + layout.getFretLabelFormatter().format(note.getValue()));
+		painter.setFont(layout.getResources().getNoteFont());
+		float fmWidth = painter.getFMWidth(status);
+		float fmHeight = (painter.getFMTopLine() - painter.getFMBaseLine());
+		float fmMiddleLine = painter.getFMMiddleLine();
+		float pad = layout.getScale();
+
+		painter.setBackground(layout.getResources().getBackgroundColor());
+		painter.initPath(UIPainter.PATH_FILL);
+		painter.addRectangle(x, y - (fmHeight / 2f) - pad, fmWidth + (2f * pad), fmHeight + (2f * pad));
+		painter.closePath();
+
+		this.setPaintStyle(painter, true);
+		painter.drawString(status, x + pad, y + fmMiddleLine);
+	}
+
 	public void paintCaret(TGLayout layout, UIPainter painter) {
 		if(!TuxGuitar.getInstance().getPlayer().isRunning()){
 			if (this.selectedMeasure != null && !this.selectedMeasure.isOutOfBounds() && this.selectedBeat instanceof TGBeatImpl) {
@@ -179,6 +200,11 @@ public class Caret {
 						painter.setAlpha(style == UIPainter.PATH_FILL ? this.alpha : 255);
 						painter.addRoundedRectangle(x, y, width, height, 2f);
 						painter.closePath();
+					}
+
+					TGNote selectedNote = getSelectedNote();
+					if (selectedNote != null) {
+						this.paintFretStatus(layout, painter, selectedNote, x + width + (3f * layout.getScale()), y + yMargin);
 					}
 				}
 				else if( (layout.getStyle() & TGLayout.DISPLAY_SCORE) != 0){
@@ -264,7 +290,11 @@ public class Caret {
 	 */
 	private void updateDuration() {
 		if (this.selectedBeat != null) {
-			this.selectedDuration.copyFrom(this.selectedBeat.getVoice(getVoice()).getDuration());
+			// on a rest (e.g. the whole rest of a new measure) keep the duration being typed
+			TGVoice voice = this.selectedBeat.getVoice(getVoice());
+			if (!voice.isRestVoice()) {
+				this.selectedDuration.copyFrom(voice.getDuration());
+			}
 		}
 	}
 

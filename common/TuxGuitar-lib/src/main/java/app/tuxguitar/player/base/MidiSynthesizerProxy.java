@@ -35,6 +35,12 @@ public class MidiSynthesizerProxy implements MidiSynthesizer{
 		return false;
 	}
 
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		if( this.midiSynthesizer != null ){
+			this.midiSynthesizer.sendSysex(data);
+		}
+	}
+
 	public MidiSynthesizer getMidiSynthesizer() {
 		return this.midiSynthesizer;
 	}

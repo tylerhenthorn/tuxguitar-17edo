@@ -112,10 +112,12 @@ public class MidiRepeatController {
 					this.index = this.repeatStartIndex - 1;
 					this.repeatNumber++;
 				} else{
-					this.repeatStart = 0;
+					// repeat done: next measure is default open repeat,
+					// so that a later repeat close without explicit repeat open is not ignored
+					this.repeatStartIndex = this.index + 1;
+					this.repeatStart = header.getStart() + header.getLength();
 					this.repeatNumber = 0;
 					this.repeatEnd = 0;
-					this.repeatOpen = false;
 				}
 				this.repeatAlternative = 0;
 			}

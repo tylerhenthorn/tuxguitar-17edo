@@ -20,7 +20,7 @@ public class SWTMouseDragListenerManager extends UIMouseDragListenerManager impl
 
 	public void mouseMove(MouseEvent e) {
 		if(!this.control.isIgnoreEvents() && this.startPosition != null ) {
-			this.onMouseDrag(new UIMouseEvent(this.control, new UIPosition(e.x - this.startPosition.getX(), e.y - this.startPosition.getY()), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.onMouseDrag(new UIMouseEvent(this.control, new UIPosition(e.x - this.startPosition.getX(), e.y - this.startPosition.getY()), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 

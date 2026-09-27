@@ -4,219 +4,195 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.tuxguitar.song.factory.TGFactory;
 import app.tuxguitar.song.models.TGScale;
 
+// notes are 17-EDO steps: 56 = C4, 69 = A4
 public class TestMusicKeyUtils {
+
+	private static final int C4 = 56;
+	private static final String[] NAMES = {"C", "Db", "C#", "D", "Eb", "D#", "E", "F", "Gb", "F#", "G", "Ab", "G#", "A", "Bb", "A#", "B"};
+	private static final int[] INDEXES = {0, 1, 0, 1, 2, 1, 2, 3, 4, 3, 4, 5, 4, 5, 6, 5, 6};
 
 	@Test
 	public void testNotesNames() {
-		assertEquals("A",TGMusicKeyUtils.sharpNoteName(69));
-		assertEquals("A#",TGMusicKeyUtils.sharpNoteName(70));
-		assertEquals("A",TGMusicKeyUtils.sharpNoteName(81));
+		for (int i = 0; i < 17; i++) {
+			assertEquals(NAMES[i], TGMusicKeyUtils.sharpNoteName(C4 + i), "step " + i);
+			assertEquals(NAMES[i], TGMusicKeyUtils.flatNoteName(C4 + i), "step " + i);
+			assertEquals(NAMES[i], TGMusicKeyUtils.noteName(C4 + i, 0), "step " + i);
+			assertEquals(NAMES[i], TGMusicKeyUtils.noteName(C4 + i - 34, 0), "step " + i);
+			assertEquals(NAMES[i] + "4", TGMusicKeyUtils.sharpNoteFullName(C4 + i), "step " + i);
+			assertEquals(NAMES[i].substring(0, 1), TGMusicKeyUtils.noteShortName(C4 + i, 0), "step " + i);
+		}
+		assertEquals("A", TGMusicKeyUtils.sharpNoteName(69));
+		assertEquals("A#", TGMusicKeyUtils.sharpNoteName(71));
+		assertEquals("Bb", TGMusicKeyUtils.sharpNoteName(70));
+		assertEquals("A", TGMusicKeyUtils.sharpNoteName(86));
+		assertEquals("G#0", TGMusicKeyUtils.sharpNoteFullName(0));
+		assertEquals("D8", TGMusicKeyUtils.sharpNoteFullName(127));
 		assertNull(TGMusicKeyUtils.sharpNoteName(-1));
-		assertNull(TGMusicKeyUtils.sharpNoteName(11));
 		assertNull(TGMusicKeyUtils.sharpNoteName(128));
-
-		assertEquals("A",TGMusicKeyUtils.flatNoteName(69));
-		assertEquals("Bb",TGMusicKeyUtils.flatNoteName(70));
-		assertEquals("A",TGMusicKeyUtils.flatNoteName(81));
 		assertNull(TGMusicKeyUtils.flatNoteName(-1));
-		assertNull(TGMusicKeyUtils.flatNoteName(11));
-		assertNull(TGMusicKeyUtils.flatNoteName(128));
+		assertNull(TGMusicKeyUtils.noteShortName(128, 3));
+		assertNull(TGMusicKeyUtils.noteFullName(128, 3));
+		assertNull(TGMusicKeyUtils.noteName(60, 15));
+	}
 
-		assertEquals("A",TGMusicKeyUtils.noteShortName(69,0));
-		assertEquals("A",TGMusicKeyUtils.noteShortName(70,1));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(71,2));
-		assertNull(TGMusicKeyUtils.noteShortName(-1,3));
-		assertNull(TGMusicKeyUtils.noteShortName(11,4));
-		assertNull(TGMusicKeyUtils.noteShortName(128,5));
-		assertEquals("F",TGMusicKeyUtils.noteShortName(77,5));	// F
-		assertEquals("E",TGMusicKeyUtils.noteShortName(77,6));	// E#
-		assertEquals("E",TGMusicKeyUtils.noteShortName(77,7));	// E#
-		assertEquals("C",TGMusicKeyUtils.noteShortName(60,6));	// C
-		assertEquals("B",TGMusicKeyUtils.noteShortName(60,7));	// B#
-
-		assertEquals("A",TGMusicKeyUtils.noteShortName(69,8));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(70,9));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(71,10));
-		assertNull(TGMusicKeyUtils.noteShortName(-1,11));
-		assertNull(TGMusicKeyUtils.noteShortName(11,12));
-		assertNull(TGMusicKeyUtils.noteShortName(128,13));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(59,12));	// B
-		assertEquals("C",TGMusicKeyUtils.noteShortName(59,13));	// Cb
-		assertEquals("C",TGMusicKeyUtils.noteShortName(59,14));	// Cb
-		assertEquals("E",TGMusicKeyUtils.noteShortName(64,13));	//E
-		assertEquals("F",TGMusicKeyUtils.noteShortName(64,14));	//Fb
-
-		assertEquals("A4",TGMusicKeyUtils.sharpNoteFullName(69));
-		assertEquals("A#4",TGMusicKeyUtils.sharpNoteFullName(70));
-		assertEquals("A5",TGMusicKeyUtils.sharpNoteFullName(81));
-		assertNull(TGMusicKeyUtils.sharpNoteFullName(-1));
-		assertNull(TGMusicKeyUtils.sharpNoteFullName(11));
-		assertNull(TGMusicKeyUtils.sharpNoteFullName(128));
-
-		assertEquals("C4",TGMusicKeyUtils.noteFullName(60,6));
-		assertEquals("B#3",TGMusicKeyUtils.noteFullName(60,7));
-		assertEquals("E4",TGMusicKeyUtils.noteFullName(64,13));
-		assertEquals("Fb4",TGMusicKeyUtils.noteFullName(64,14));
-		assertEquals("Cb4",TGMusicKeyUtils.noteFullName(59,13));
-		assertEquals("B3",TGMusicKeyUtils.noteFullName(59,12));
-
+	@Test
+	public void testOpenStrings() {
+		int[] strings = {28, 35, 42, 49, 55, 62};
+		String[] expected = {"E2", "A2", "D3", "G3", "B3", "E4"};
+		for (int i = 0; i < strings.length; i++) {
+			assertEquals(expected[i], TGMusicKeyUtils.sharpNoteFullName(strings[i]));
+			assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(strings[i], 0));
+		}
+		// C major, raw frets 0 1 0 3 4 from high e down to A
+		int[] chord = {62 + 0, 55 + 1, 49 + 0, 42 + 3, 35 + 4};
+		String[] chordNames = {"E", "C", "G", "E", "C"};
+		for (int i = 0; i < chord.length; i++) {
+			assertEquals(chordNames[i], TGMusicKeyUtils.noteName(chord[i], 0));
+			assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(chord[i], 0));
+		}
+		// fret 2 of the D string is D#
+		assertEquals("D#", TGMusicKeyUtils.noteName(42 + 2, 0));
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(42 + 2, 0));
+		// 4-string bass
+		assertEquals("E1", TGMusicKeyUtils.sharpNoteFullName(11));
+		assertEquals("G2", TGMusicKeyUtils.sharpNoteFullName(32));
 	}
 
 	@Test
 	public void testNotesOctave() {
-		assertEquals(3, TGMusicKeyUtils.noteOctave(59));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(60));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(71));
-		assertEquals(5, TGMusicKeyUtils.noteOctave(72));
-		assertEquals(0,TGMusicKeyUtils.noteOctave(-1));
-		assertEquals(0,TGMusicKeyUtils.noteOctave(11));
-		assertEquals(0,TGMusicKeyUtils.noteOctave(128));
+		assertEquals(3, TGMusicKeyUtils.noteOctave(55));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(56));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(69));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(72));
+		assertEquals(5, TGMusicKeyUtils.noteOctave(73));
+		assertEquals(0, TGMusicKeyUtils.noteOctave(0));
+		assertEquals(8, TGMusicKeyUtils.noteOctave(127));
+		assertEquals(0, TGMusicKeyUtils.noteOctave(-1));
+		assertEquals(0, TGMusicKeyUtils.noteOctave(128));
 
-		// C4==B#3
-		assertEquals(4, TGMusicKeyUtils.noteOctave(60,6));
-		assertEquals(3, TGMusicKeyUtils.noteOctave(60,7));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(60,8));
-		// B3==Cb4
-		assertEquals(3, TGMusicKeyUtils.noteOctave(59,12));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(59,13));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(59,14));
-
+		// Db4 == B#3
+		assertEquals(4, TGMusicKeyUtils.noteOctave(57, 6));
+		assertEquals(3, TGMusicKeyUtils.noteOctave(57, 7));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(57, 8));
+		// A#3 == Cb4
+		assertEquals(3, TGMusicKeyUtils.noteOctave(54, 12));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(54, 13));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(54, 14));
 	}
 
 	@Test
 	public void testNoteIsNatural() {
-		assertTrue(TGMusicKeyUtils.isNaturalNote(60));
-		assertFalse(TGMusicKeyUtils.isNaturalNote(61));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(62));
-		assertFalse(TGMusicKeyUtils.isNaturalNote(63));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(64));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(65));
-		assertFalse(TGMusicKeyUtils.isNaturalNote(66));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(67));
-		assertFalse(TGMusicKeyUtils.isNaturalNote(68));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(69));
-		assertFalse(TGMusicKeyUtils.isNaturalNote(70));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(71));
-		assertTrue(TGMusicKeyUtils.isNaturalNote(72));
+		for (int i = 0; i < 17; i++) {
+			assertEquals(NAMES[i].length() == 1, TGMusicKeyUtils.isNaturalNote(C4 + i), "step " + i);
+		}
+		assertTrue(TGMusicKeyUtils.isNaturalNote(28));
+		assertTrue(TGMusicKeyUtils.isNaturalNote(29));	// F2
+		assertFalse(TGMusicKeyUtils.isNaturalNote(30));	// Gb2
 	}
 
 	@Test
 	public void testNotesPosition() {
+		// without key signature: every name of the table
+		for (int i = 0; i < 17; i++) {
+			int expected = (NAMES[i].endsWith("#") ? TGMusicKeyUtils.SHARP : (NAMES[i].endsWith("b") ? TGMusicKeyUtils.FLAT : TGMusicKeyUtils.NATURAL));
+			assertEquals(INDEXES[i], TGMusicKeyUtils.noteIndex(C4 + i, 0), "step " + i);
+			assertEquals(expected, TGMusicKeyUtils.noteAlteration(C4 + i, 0), "step " + i);
+			assertEquals(expected == TGMusicKeyUtils.NATURAL ? TGMusicKeyUtils.NONE : expected, TGMusicKeyUtils.noteAccidental(C4 + i, 0), "step " + i);
+		}
 
-		// D# or Eb?
-		// zero or more sharps -> D#
-		assertEquals(1, TGMusicKeyUtils.noteIndex(63,0));
-		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(63,0));
-		assertEquals(1, TGMusicKeyUtils.noteIndex(63,1));
-		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(63,1));
-		assertEquals(1, TGMusicKeyUtils.noteIndex(63,4));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(63,4));
-		assertEquals(1, TGMusicKeyUtils.noteIndex(63,7));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(63,7));
-		// 1 or more flats -> Eb
-		assertEquals(2, TGMusicKeyUtils.noteIndex(63,8));
-		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(63,8));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(63,9));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(63,9));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(63,14));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(63,14));
+		// C# and Db are different notes, whatever the key signature
+		for (int key = 0; key <= 14; key++) {
+			assertEquals(0, TGMusicKeyUtils.noteIndex(C4 + 2, key));
+			assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAlteration(C4 + 2, key));
+			assertEquals(2, TGMusicKeyUtils.noteIndex(C4 + 4, key));
+			assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAlteration(C4 + 4, key));
+		}
 
-		// C or B#?
-		// less than 7 sharps -> C
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,0));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(60,0));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,1));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(60,1));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,2));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(60,2));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,6));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(60,6));
-		// 7 sharps -> B#
-		assertEquals(6, TGMusicKeyUtils.noteIndex(60,7));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(60,7));
-		// 1 or more flats -> C
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,8));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(60,8));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,12));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(60,12));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(60,13));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(60,13));
+		// F# (step 9): accidental until the key signature holds it
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(C4 + 9, 0));
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(C4 + 9, 8));
+		for (int key = 1; key <= 7; key++) {
+			assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 9, key));
+			// natural F needs a natural sign
+			assertEquals(3, TGMusicKeyUtils.noteIndex(C4 + 7, key));
+			assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(C4 + 7, key));
+		}
+		// C# (step 2): in key signature from 2 sharps
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(C4 + 2, 1));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 2, 2));
+		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(C4, 2));
+		// Bb (step 14): in key signature from 1 flat, Eb (step 4) from 2 flats
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 14, 0));
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 14, 3));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 14, 8));
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 4, 8));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 4, 9));
+		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(C4 + 16, 8));
+		// a sharp in a flat key
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(C4 + 15, 8));
+	}
 
-		// F or E#?
-		// less than 6 sharps -> F
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,0));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(65,0));
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,1));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(65,1));
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,5));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(65,5));
-		// 6 or 7 sharps -> E#
-		assertEquals(2, TGMusicKeyUtils.noteIndex(65,6));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(65,6));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(65,7));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(65,7));
-		// 1 or more flats -> F
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,8));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(65,8));
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,13));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(65,13));
-		assertEquals(3, TGMusicKeyUtils.noteIndex(65,14));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(65,14));
+	@Test
+	public void testSecondNames() {
+		// Gb or E#?
+		assertEquals("Gb", TGMusicKeyUtils.noteName(C4 + 8, 5));
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 8, 5));
+		assertEquals("E#", TGMusicKeyUtils.noteName(C4 + 8, 6));
+		assertEquals(2, TGMusicKeyUtils.noteIndex(C4 + 8, 6));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 8, 6));
+		assertEquals("E#4", TGMusicKeyUtils.noteFullName(C4 + 8, 7));
+		assertEquals("Gb", TGMusicKeyUtils.noteName(C4 + 8, 8));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 8, 12));
 
-		// E or Fb?
-		// less than 7 flats -> E
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,0));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(64,0));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,5));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(64,5));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,6));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(64,6));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,8));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(64,8));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,9));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(64,9));
-		assertEquals(2, TGMusicKeyUtils.noteIndex(64,13));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(64,13));
-		// 7 flats -> Fb
-		assertEquals(3, TGMusicKeyUtils.noteIndex(64,14));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(64,14));
+		// Db or B#?
+		assertEquals("Db", TGMusicKeyUtils.noteName(C4 + 1, 6));
+		assertEquals("B#", TGMusicKeyUtils.noteName(C4 + 1, 7));
+		assertEquals(6, TGMusicKeyUtils.noteIndex(C4 + 1, 7));
+		assertEquals("B#3", TGMusicKeyUtils.noteFullName(C4 + 1, 7));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 1, 7));
 
-		// B or Cb?
-		// less than 6 flats -> B
-		assertEquals(6, TGMusicKeyUtils.noteIndex(59,0));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(59,0));
-		assertEquals(6, TGMusicKeyUtils.noteIndex(59,6));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(59,6));
-		assertEquals(6, TGMusicKeyUtils.noteIndex(59,7));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(59,7));
-		assertEquals(6, TGMusicKeyUtils.noteIndex(59,8));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(59,8));
-		assertEquals(6, TGMusicKeyUtils.noteIndex(59,12));
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAccidental(59,12));
-		// 6 or 7 flats -> Cb
-		assertEquals(0, TGMusicKeyUtils.noteIndex(59,13));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(59,13));
-		assertEquals(0, TGMusicKeyUtils.noteIndex(59,14));
-		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(59,14));
+		// A# or Cb?
+		assertEquals("A#", TGMusicKeyUtils.noteName(C4 + 15, 12));
+		assertEquals("Cb", TGMusicKeyUtils.noteName(C4 + 15, 13));
+		assertEquals(0, TGMusicKeyUtils.noteIndex(C4 + 15, 14));
+		assertEquals("Cb5", TGMusicKeyUtils.noteFullName(C4 + 15, 13));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 15, 13));
+
+		// D# or Fb?
+		assertEquals("D#", TGMusicKeyUtils.noteName(C4 + 5, 13));
+		assertEquals("Fb", TGMusicKeyUtils.noteName(C4 + 5, 14));
+		assertEquals(3, TGMusicKeyUtils.noteIndex(C4 + 5, 14));
+		assertEquals("Fb4", TGMusicKeyUtils.noteFullName(C4 + 5, 14));
+		assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(C4 + 5, 14));
 	}
 
 	@Test
 	public void testNoteIndexToMidi(){
-		// A4 -> 69, etc
 		assertEquals(69, TGMusicKeyUtils.midiNote(5,4));
-		assertEquals(60, TGMusicKeyUtils.midiNote(0,4));
-		assertEquals(59, TGMusicKeyUtils.midiNote(6,3));
-		assertEquals(53, TGMusicKeyUtils.midiNote(3,3));
-		assertEquals(52, TGMusicKeyUtils.midiNote(2,3));
-		assertEquals(50, TGMusicKeyUtils.midiNote(1,3));
-		assertEquals(43, TGMusicKeyUtils.midiNote(4,2));
+		assertEquals(56, TGMusicKeyUtils.midiNote(0,4));
+		assertEquals(55, TGMusicKeyUtils.midiNote(6,3));
+		assertEquals(28, TGMusicKeyUtils.midiNote(2,2));
+		assertEquals(49, TGMusicKeyUtils.midiNote(4,3));
+		// round trip, all naturals
+		for (int octave = 1; octave <= 7; octave++) {
+			for (int index = 0; index < 7; index++) {
+				int midiNote = TGMusicKeyUtils.midiNote(index, octave);
+				assertEquals(index, TGMusicKeyUtils.noteIndex(midiNote, 0));
+				assertEquals(octave, TGMusicKeyUtils.noteOctave(midiNote, 0));
+				assertTrue(TGMusicKeyUtils.isNaturalNote(midiNote));
+				// altered note of the same staff position
+				assertEquals(index, TGMusicKeyUtils.noteIndex(midiNote + TGMusicKeyUtils.ALTERATION_STEPS, 7));
+				assertEquals(index, TGMusicKeyUtils.noteIndex(midiNote - TGMusicKeyUtils.ALTERATION_STEPS, 14));
+				assertEquals(octave, TGMusicKeyUtils.noteOctave(midiNote + TGMusicKeyUtils.ALTERATION_STEPS, 7));
+				assertEquals(octave, TGMusicKeyUtils.noteOctave(midiNote - TGMusicKeyUtils.ALTERATION_STEPS, 14));
+			}
+		}
 	}
 
 	@Test
@@ -240,30 +216,6 @@ public class TestMusicKeyUtils {
 	}
 
 	@Test
-	public void testAlterations() {
-		assertEquals(TGMusicKeyUtils.NATURAL, TGMusicKeyUtils.noteAlteration(60, 0));
-		for (int key=0; key<=7; key++) {
-			assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAlteration(61, key));
-		}
-		for (int key=0; key<=3; key ++) {
-			assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(63, key));
-		}
-		for (int key=4; key<=7; key ++) {
-			assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(61, key));
-		}
-
-		for (int key=8; key<=14; key++) {
-			assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAlteration(61, key));
-		}
-		for (int key=8; key<=11; key ++) {
-			assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(66, key));
-		}
-		for (int key=12; key<=14; key ++) {
-			assertEquals(TGMusicKeyUtils.NONE, TGMusicKeyUtils.noteAccidental(66, key));
-		}
-	}
-
-	@Test
 	public void testAddInterval() {
 		// notes indexes (i.e. C, D, ... B)
 		assertEquals(2, TGMusicKeyUtils.noteIndexAddInterval(0, 2)); // C+2 = E
@@ -277,145 +229,47 @@ public class TestMusicKeyUtils {
 		assertEquals(3, TGMusicKeyUtils.noteOctaveAddInterval(3, 4, -8)); // F4-8 = octave 3
 	}
 
-	// check names, alternative enharmonic representation
+	// alternative enharmonic representation: only Db/B#, D#/Fb, Gb/E#, A#/Cb
 	@Test
 	public void testAltName() {
-		// A is always A, whatever enharmonic representation
-		assertEquals("A",TGMusicKeyUtils.noteShortName(69,0,true));
-		assertEquals("A",TGMusicKeyUtils.noteName(69,0,true));
-		assertEquals("A",TGMusicKeyUtils.noteShortName(69,7,true));
-		assertEquals("A",TGMusicKeyUtils.noteName(69,7,true));
-		assertEquals("A",TGMusicKeyUtils.noteShortName(69,14,true));
-		assertEquals("A",TGMusicKeyUtils.noteName(69,14,true));
+		assertEquals("E#", TGMusicKeyUtils.noteName(C4 + 8, 0, true));
+		assertEquals("E", TGMusicKeyUtils.noteShortName(C4 + 8, 0, true));
+		assertEquals("Gb", TGMusicKeyUtils.noteName(C4 + 8, 6, true));
+		assertEquals("B#", TGMusicKeyUtils.noteName(C4 + 1, 0, true));
+		assertEquals("Db", TGMusicKeyUtils.noteName(C4 + 1, 7, true));
+		assertEquals("Cb", TGMusicKeyUtils.noteName(C4 + 15, 0, true));
+		assertEquals("A#", TGMusicKeyUtils.noteName(C4 + 15, 13, true));
+		assertEquals("Fb", TGMusicKeyUtils.noteName(C4 + 5, 0, true));
+		assertEquals("D#", TGMusicKeyUtils.noteName(C4 + 5, 14, true));
 
-		// alternative of A# is Bb
-		assertEquals("B",TGMusicKeyUtils.noteShortName(70,0,true));
-		assertEquals("Bb",TGMusicKeyUtils.noteName(70,0,true));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(70,4,true));
-		assertEquals("Bb",TGMusicKeyUtils.noteName(70,4,true));
-		// alternative of Bb is A#
-		assertEquals("A",TGMusicKeyUtils.noteShortName(70,8,true));
-		assertEquals("A#",TGMusicKeyUtils.noteName(70,8,true));
+		assertEquals(TGMusicKeyUtils.SHARP, TGMusicKeyUtils.noteAccidental(C4 + 8, 0, true));
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 8, 6, true));
+		assertEquals(TGMusicKeyUtils.FLAT, TGMusicKeyUtils.noteAccidental(C4 + 15, 0, true));
 
-		// B -> Cb
-		assertEquals("C",TGMusicKeyUtils.noteShortName(71,7,true));
-		assertEquals("Cb",TGMusicKeyUtils.noteName(71,7,true));
-		assertEquals("C",TGMusicKeyUtils.noteShortName(71,12,true));
-		assertEquals("Cb",TGMusicKeyUtils.noteName(71,12,true));
-		// Cb -> B
-		assertEquals("B",TGMusicKeyUtils.noteShortName(71,13,true));
-		assertEquals("B",TGMusicKeyUtils.noteName(71,13,true));
-
-		// C -> B#
-		assertEquals("B",TGMusicKeyUtils.noteShortName(72,6,true));
-		assertEquals("B#",TGMusicKeyUtils.noteName(72,6,true));
-		assertEquals("B",TGMusicKeyUtils.noteShortName(72,14,true));
-		assertEquals("B#",TGMusicKeyUtils.noteName(72,14,true));
-		// B# -> C
-		assertEquals("C",TGMusicKeyUtils.noteShortName(72,7,true));
-		assertEquals("C",TGMusicKeyUtils.noteName(72,7,true));
-
-		// C# -> Db
-		assertEquals("D",TGMusicKeyUtils.noteShortName(73,0,true));
-		assertEquals("Db",TGMusicKeyUtils.noteName(73,0,true));
-		assertEquals("D",TGMusicKeyUtils.noteShortName(73,7,true));
-		assertEquals("Db",TGMusicKeyUtils.noteName(73,7,true));
-		// Db -> C#
-		assertEquals("C",TGMusicKeyUtils.noteShortName(73,8,true));
-		assertEquals("C#",TGMusicKeyUtils.noteName(73,8,true));
-
-		// D -> D
-		assertEquals("D",TGMusicKeyUtils.noteShortName(74,0,true));
-		assertEquals("D",TGMusicKeyUtils.noteName(74,0,true));
-		assertEquals("D",TGMusicKeyUtils.noteShortName(74,7,true));
-		assertEquals("D",TGMusicKeyUtils.noteName(74,7,true));
-		assertEquals("D",TGMusicKeyUtils.noteShortName(74,14,true));
-		assertEquals("D",TGMusicKeyUtils.noteName(74,14,true));
-
-		// D# -> Eb
-		assertEquals("E",TGMusicKeyUtils.noteShortName(75,0,true));
-		assertEquals("Eb",TGMusicKeyUtils.noteName(75,0,true));
-		// Eb -> D#
-		assertEquals("D",TGMusicKeyUtils.noteShortName(75,8,true));
-		assertEquals("D#",TGMusicKeyUtils.noteName(75,8,true));
-		assertEquals("D",TGMusicKeyUtils.noteShortName(75,9,true));
-		assertEquals("D#",TGMusicKeyUtils.noteName(75,9,true));
-
-		// E -> Fb
-		assertEquals("F",TGMusicKeyUtils.noteShortName(76,0,true));
-		assertEquals("Fb",TGMusicKeyUtils.noteName(76,0,true));
-		assertEquals("F",TGMusicKeyUtils.noteShortName(76,13,true));
-		assertEquals("Fb",TGMusicKeyUtils.noteName(76,13,true));
-		// Fb -> E
-		assertEquals("E",TGMusicKeyUtils.noteShortName(76,14,true));
-		assertEquals("E",TGMusicKeyUtils.noteName(76,14,true));
-
-		// F -> E#
-		assertEquals("E",TGMusicKeyUtils.noteShortName(77,5,true));
-		assertEquals("E#",TGMusicKeyUtils.noteName(77,5,true));
-		assertEquals("E",TGMusicKeyUtils.noteShortName(77,14,true));
-		assertEquals("E#",TGMusicKeyUtils.noteName(77,14,true));
-		// E# -> F
-		assertEquals("F",TGMusicKeyUtils.noteShortName(77,6,true));
-		assertEquals("F",TGMusicKeyUtils.noteName(77,6,true));
-
-		// F# -> Gb
-		assertEquals("G",TGMusicKeyUtils.noteShortName(78,0,true));
-		assertEquals("Gb",TGMusicKeyUtils.noteName(78,0,true));
-		// Gb -> F#
-		assertEquals("F",TGMusicKeyUtils.noteShortName(78,8,true));
-		assertEquals("F#",TGMusicKeyUtils.noteName(78,8,true));
-		assertEquals("F",TGMusicKeyUtils.noteShortName(78,12,true));
-		assertEquals("F#",TGMusicKeyUtils.noteName(78,12,true));
-
-		// G -> G
-		assertEquals("G",TGMusicKeyUtils.noteShortName(79,0,true));
-		assertEquals("G",TGMusicKeyUtils.noteName(79,0,true));
-		assertEquals("G",TGMusicKeyUtils.noteShortName(79,7,true));
-		assertEquals("G",TGMusicKeyUtils.noteName(79,7,true));
-		assertEquals("G",TGMusicKeyUtils.noteShortName(79,14,true));
-		assertEquals("G",TGMusicKeyUtils.noteName(79,14,true));
-
-		// G# -> Ab
-		assertEquals("A",TGMusicKeyUtils.noteShortName(80,0,true));
-		assertEquals("Ab",TGMusicKeyUtils.noteName(80,0,true));
-		// Ab -> G#
-		assertEquals("G",TGMusicKeyUtils.noteShortName(80,8,true));
-		assertEquals("G#",TGMusicKeyUtils.noteName(80,8,true));
-		assertEquals("G",TGMusicKeyUtils.noteShortName(80,10,true));
-		assertEquals("G#",TGMusicKeyUtils.noteName(80,10,true));
-	}
-	@Test
-	public void testAltOctave() {
-		// C4==B#3
-		assertEquals(3, TGMusicKeyUtils.noteOctave(60,6,true));
-		assertEquals(4, TGMusicKeyUtils.noteOctave(60,7,true));
-		assertEquals(3, TGMusicKeyUtils.noteOctave(60,8,true));
-		// B3==Cb4
-		assertEquals(4, TGMusicKeyUtils.noteOctave(59,12,true));
-		assertEquals(3, TGMusicKeyUtils.noteOctave(59,13,true));
-		assertEquals(3, TGMusicKeyUtils.noteOctave(59,14,true));
-
-	}
-
-	@Test
-	public void testAltPosition() {
-		for (int keySignature=0; keySignature<=14; keySignature++) {
-			for (int midiNote=69; midiNote<81; midiNote++) {
-				if ((midiNote==69) || (midiNote==74) || (midiNote==79)) {
-					// A, D, G -> alternative enharmonic representation equals normal representation
-					assertEquals(TGMusicKeyUtils.noteIndex(midiNote,keySignature), TGMusicKeyUtils.noteIndex(midiNote,keySignature,true));
-					assertEquals(TGMusicKeyUtils.noteAccidental(midiNote,keySignature), TGMusicKeyUtils.noteAccidental(midiNote,keySignature,true));
-				}
-				else {
-					// alternative shall differ from normal
-					assertNotEquals(TGMusicKeyUtils.noteIndex(midiNote,keySignature), TGMusicKeyUtils.noteIndex(midiNote,keySignature,true));
-					assertNotEquals(TGMusicKeyUtils.noteAccidental(midiNote,keySignature), TGMusicKeyUtils.noteAccidental(midiNote,keySignature,true));
-				}
+		// other notes have no alternative
+		for (int keySignature = 0; keySignature <= 14; keySignature++) {
+			for (int step : new int[] {0, 2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 16}) {
+				assertEquals(TGMusicKeyUtils.noteName(C4 + step, keySignature), TGMusicKeyUtils.noteName(C4 + step, keySignature, true));
+				assertEquals(TGMusicKeyUtils.noteIndex(C4 + step, keySignature), TGMusicKeyUtils.noteIndex(C4 + step, keySignature, true));
+				assertEquals(TGMusicKeyUtils.noteOctave(C4 + step, keySignature), TGMusicKeyUtils.noteOctave(C4 + step, keySignature, true));
+				assertEquals(TGMusicKeyUtils.noteAccidental(C4 + step, keySignature), TGMusicKeyUtils.noteAccidental(C4 + step, keySignature, true));
 			}
 		}
 	}
 
+	@Test
+	public void testAltOctave() {
+		// Db4 == B#3
+		assertEquals(3, TGMusicKeyUtils.noteOctave(57,6,true));
+		assertEquals(4, TGMusicKeyUtils.noteOctave(57,7,true));
+		assertEquals(3, TGMusicKeyUtils.noteOctave(57,8,true));
+		// A#3 == Cb4
+		assertEquals(4, TGMusicKeyUtils.noteOctave(54,12,true));
+		assertEquals(3, TGMusicKeyUtils.noteOctave(54,13,true));
+		assertEquals(3, TGMusicKeyUtils.noteOctave(54,14,true));
+	}
+
+	// scales are 12-EDO
 	@Test
 	public void testScaleKeySignature() {
 		TGFactory factory = new TGFactory();

@@ -79,6 +79,12 @@ public class TGSynthChannel implements MidiChannel {
 		}
 	}
 
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		if( this.processor != null && this.processor.getProcessor() != null ) {
+			this.processor.getProcessor().sendSysex(data);
+		}
+	}
+
 	public void sendNoteOn(int key, int velocity, int voice, boolean bendMode) throws MidiPlayerException {
 		if( this.processor != null && this.processor.getProcessor() != null ) {
 			this.processor.getProcessor().sendNoteOn(key, velocity, voice, bendMode);

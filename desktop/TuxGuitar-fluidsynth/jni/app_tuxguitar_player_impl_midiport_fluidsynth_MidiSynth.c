@@ -129,6 +129,23 @@ JNIEXPORT void JNICALL Java_app_tuxguitar_player_impl_midiport_fluidsynth_MidiSy
 	}
 }
 
+JNIEXPORT void JNICALL Java_app_tuxguitar_player_impl_midiport_fluidsynth_MidiSynth_sysex(JNIEnv* env, jobject obj, jlong ptr, jbyteArray data)
+{
+	fluid_handle_t *handle = NULL;
+	memcpy(&handle, &ptr, sizeof(handle));
+	if(handle != NULL && handle->synth != NULL && data != NULL){
+		jsize length = (*env)->GetArrayLength(env, data);
+		jbyte* bytes = (*env)->GetByteArrayElements(env, data, NULL);
+		if(bytes != NULL){
+			/* fluid_synth_sysex takes the payload without the leading F0 and trailing F7 */
+			if(length > 2 && (bytes[0] & 0xFF) == 0xF0){
+				fluid_synth_sysex(handle->synth, (const char*)(bytes + 1), (int)(length - 2), NULL, NULL, NULL, 0);
+			}
+			(*env)->ReleaseByteArrayElements(env, data, bytes, JNI_ABORT);
+		}
+	}
+}
+
 JNIEXPORT void JNICALL Java_app_tuxguitar_player_impl_midiport_fluidsynth_MidiSynth_noteOn(JNIEnv* env, jobject obj, jlong ptr, jint channel, jint note, jint velocity)
 {
 	fluid_handle_t *handle = NULL;
