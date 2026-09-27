@@ -7,6 +7,7 @@ import app.tuxguitar.graphics.control.painters.TGNotePainter;
 import app.tuxguitar.graphics.control.painters.TGNumberPainter;
 import app.tuxguitar.song.factory.TGFactory;
 import app.tuxguitar.song.models.TGBeat;
+import app.tuxguitar.song.models.TGDivisionType;
 import app.tuxguitar.song.models.TGDuration;
 import app.tuxguitar.song.models.TGMeasure;
 import app.tuxguitar.song.models.TGNote;
@@ -276,6 +277,7 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, x + (6f * scale), (y1 + ((y2 - y1) / 2) + posy - (4f * scale)) / 2f);
 					}
 				}
 			}
@@ -419,6 +421,7 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, x + xMove + (6f * layoutScale), tpY - (4f * layoutScale));
 					}
 				}else{
 
@@ -448,9 +451,19 @@ public class TGNoteImpl extends TGNote {
 						}
 						painter.closePath();
 						painter.setLineWidth(layout.getLineWidth(1));
+						paintTremoloPickingDivision(layout, painter, tpX + (6f * layoutScale), tpY - (4f * layoutScale));
 					}
 				}
 			}
+		}
+	}
+
+	// tremolo picking in tuplets (e.g. triplets): paint division type next to the slashes
+	private void paintTremoloPickingDivision(TGLayout layout, UIPainter painter, float x, float y) {
+		TGDivisionType divisionType = getEffect().getTremoloPicking().getDuration().getDivision();
+		if (!divisionType.isEqual(TGDivisionType.NORMAL)) {
+			layout.setDivisionTypeStyle(painter);
+			painter.drawString(Integer.toString(divisionType.getEnters()), x, y + painter.getFMMiddleLine());
 		}
 	}
 
