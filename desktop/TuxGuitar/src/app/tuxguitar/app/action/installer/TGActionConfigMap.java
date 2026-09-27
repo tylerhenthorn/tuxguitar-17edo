@@ -14,8 +14,10 @@ import app.tuxguitar.app.action.impl.composition.TGOpenTimeSignatureDialogAction
 import app.tuxguitar.app.action.impl.composition.TGOpenTripletFeelDialogAction;
 import app.tuxguitar.app.action.impl.edit.TGCopyAction;
 import app.tuxguitar.app.action.impl.edit.TGCutAction;
+import app.tuxguitar.app.action.impl.edit.TGMoveSelectionAction;
 import app.tuxguitar.app.action.impl.edit.TGOpenMeasureErrorsDialogAction;
 import app.tuxguitar.app.action.impl.edit.TGPasteAction;
+import app.tuxguitar.app.action.impl.edit.TGUpdateDragMoveAction;
 import app.tuxguitar.app.action.impl.edit.TGRepeatAction;
 import app.tuxguitar.app.action.impl.edit.TGSetMouseModeEditionAction;
 import app.tuxguitar.app.action.impl.edit.TGSetMouseModeSelectionAction;
@@ -143,6 +145,7 @@ import app.tuxguitar.app.action.listener.cache.TGUpdateController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateAddedMeasureController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateAddedTrackController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateBeatRangeController;
+import app.tuxguitar.app.action.listener.cache.controller.TGUpdateDeletedBeatsController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateChannelsController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateItemsController;
 import app.tuxguitar.app.action.listener.cache.controller.TGUpdateItemsOnSuccessController;
@@ -374,6 +377,8 @@ public class TGActionConfigMap extends TGActionMap<TGActionConfig> {
 		this.map(TGCutAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT);
 		this.map(TGCopyAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT);
 		this.map(TGPasteAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_SONG_CTL, UNDOABLE_SONG_GENERIC);
+		this.map(TGMoveSelectionAction.NAME, LOCKABLE | DISABLE_ON_PLAY, UPDATE_SONG_CTL, UNDOABLE_SONG_GENERIC);
+		this.map(TGUpdateDragMoveAction.NAME, LOCKABLE | DISABLE_ON_PLAY);
 		this.map(TGRepeatAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_SONG_CTL, UNDOABLE_SONG_GENERIC);
 		this.map(TGUndoAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT);
 		this.map(TGRedoAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT);
@@ -468,7 +473,7 @@ public class TGActionConfigMap extends TGActionMap<TGActionConfig> {
 		this.map(TGCleanBeatAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_BEAT_RANGE_CTL, UNDOABLE_BEAT_RANGE_GENERIC);
 		this.map(TGDecrementNoteSemitoneAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_NOTE_RANGE_CTL, UNDOABLE_NOTE_RANGE);
 		this.map(TGDeleteNoteAction.NAME, LOCKABLE | DISABLE_ON_PLAY, UPDATE_MEASURE_CTL, UNDOABLE_MEASURE_GENERIC);
-		this.map(TGDeleteNoteOrRestAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_BEAT_RANGE_CTL, UNDOABLE_BEAT_RANGE_GENERIC);
+		this.map(TGDeleteNoteOrRestAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, new TGUpdateDeletedBeatsController(), UNDOABLE_SONG_GENERIC);
 		this.map(TGIncrementNoteSemitoneAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_NOTE_RANGE_CTL, UNDOABLE_NOTE_RANGE);
 		this.map(TGInsertRestBeatAction.NAME, LOCKABLE | DISABLE_ON_PLAY | SHORTCUT, UPDATE_MEASURE_CTL, UNDOABLE_MEASURE_GENERIC);
 		this.map(TGMoveBeatsAction.NAME, LOCKABLE | DISABLE_ON_PLAY, UPDATE_SONG_CTL, UNDOABLE_TRACK_GENERIC);

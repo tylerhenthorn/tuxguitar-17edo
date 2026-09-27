@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.system.config.TGConfigManager;
+import app.tuxguitar.app.system.config.TGFretLabelConfig;
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
 import app.tuxguitar.graphics.control.TGChordImpl;
 import app.tuxguitar.song.models.TGChannel;
 import app.tuxguitar.song.models.TGChord;
@@ -44,7 +47,7 @@ public class TGChordEditor {
 	public static final int STRING_SPACING = 30;
 	public static final int FRET_SPACING = 30;
 	public static final short MIN_FRET = 1;
-	public static final short MAX_FRET = 24;
+	public static final short MAX_FRET = 99;
 
 	private TGChordDialog dialog;
 	private UIPanel control;
@@ -174,7 +177,10 @@ public class TGChordEditor {
 		painter.lineTo(STRING_SPACING + (this.width + 10), (FRET_SPACING - 10));
 		painter.closePath();
 
-		painter.drawString(Integer.toString(getFret()), FRET_SPACING - 25,STRING_SPACING);
+		TGFretLabelFormatter fretLabelFormatter = TGFretLabelConfig.createFormatter(TGConfigManager.getInstance(this.dialog.getContext().getContext()));
+		String fretLabel = fretLabelFormatter.format(getFret());
+		float fretLabelX = Math.max(2f, (STRING_SPACING - 12f) - painter.getFMWidth(fretLabel));
+		painter.drawString(fretLabel, fretLabelX, STRING_SPACING);
 
 		// dibujo las cuerdas
 		painter.initPath();

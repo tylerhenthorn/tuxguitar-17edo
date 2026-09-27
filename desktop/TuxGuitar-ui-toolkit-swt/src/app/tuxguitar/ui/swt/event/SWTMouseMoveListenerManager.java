@@ -18,7 +18,7 @@ public class SWTMouseMoveListenerManager extends UIMouseMoveListenerManager impl
 
 	public void mouseMove(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.onMouseMove(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.onMouseMove(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 }

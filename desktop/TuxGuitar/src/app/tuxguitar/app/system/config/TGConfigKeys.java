@@ -133,4 +133,6 @@ public class TGConfigKeys {
 	public static final String SCROLLING_VERTICAL_MARGIN_PERCENT = "scrolling.continuous.vertical.margin-percent";
 	public static final String SCROLLING_HORIZONTAL_DISCRETE_ANTICIPATION = "scrolling.discrete.horizontal.anticipation";
 	public static final String SCROLLING_VERTICAL_DISCRETE_ANTICIPATION = "scrolling.discrete.vertical.anticipation";
+
+	public static final String EDO_LABELS_DOTS = "edo.labels.dots";
 }

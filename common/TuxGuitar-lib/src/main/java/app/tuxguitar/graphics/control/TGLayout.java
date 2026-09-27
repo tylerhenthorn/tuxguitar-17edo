@@ -36,6 +36,8 @@ public abstract class TGLayout {
 	private int style;
 	private float scale;
 	private float fontScale;
+	private TGFretLabelFormatter fretLabelFormatter;
+	private float tabNoteFontHeight;
 	private float width;
 	private float height;
 
@@ -122,6 +124,8 @@ public abstract class TGLayout {
 
 		this.bufferEnabled = styles.isBufferEnabled();
 		this.tabNotePathRendererEnabled = styles.isTabNotePathRendererEnabled();
+		this.fretLabelFormatter = styles.getFretLabelFormatter();
+		this.tabNoteFontHeight = (styles.getNoteFont() != null ? styles.getNoteFont().getHeight() : 0f);
 		this.stringSpacing = (styles.getStringSpacing() * getScale());
 		this.scoreLineSpacing = (styles.getScoreLineSpacing() * getScale());
 		this.minBufferSeparator = (styles.getMinBufferSeparator() * getScale());
@@ -571,6 +575,7 @@ public abstract class TGLayout {
 		chord.setLineWidth(getChordLineWidth());
 		chord.setFirstFretSpacing(getChordFretIndexSpacing());
 		chord.setFirstFretFont(getResources().getChordFretFont());
+		chord.setFretLabelFormatter(getFretLabelFormatter());
 	}
 
 	public void setLoopSMarkerStyle(UIPainter painter){
@@ -651,6 +656,23 @@ public abstract class TGLayout {
 
 	public boolean isTabNotePathRendererEnabled() {
 		return tabNotePathRendererEnabled;
+	}
+
+	public TGFretLabelFormatter getFretLabelFormatter() {
+		return (this.fretLabelFormatter != null ? this.fretLabelFormatter : TGFretLabelFormatter.DEFAULT);
+	}
+
+	/**
+	 * Rough width of a tab label painted with the note font, for layout purposes
+	 * (no painter is available while the layout is being computed).
+	 */
+	public float getTabNoteLabelWidthEstimate(String label) {
+		float charWidth = (this.tabNoteFontHeight * 0.9f * getFontScale());
+		float width = 0f;
+		for (int i = 0; i < label.length(); i++) {
+			width += (label.charAt(i) == '.' ? (charWidth / 2f) : charWidth);
+		}
+		return width;
 	}
 
 	public float getFirstMeasureSpacing() {

@@ -1,7 +1,9 @@
 package app.tuxguitar.player.impl.jsa.midiport;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Receiver;
+import javax.sound.midi.SysexMessage;
 
 import app.tuxguitar.gm.port.GMOutputPort;
 import app.tuxguitar.gm.port.GMReceiver;
@@ -97,6 +99,18 @@ class MidiReceiverImpl implements GMReceiver{
 
 	protected Receiver getReceiver(){
 		return this.receiver;
+	}
+
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		if(getReceiver() != null){
+			try {
+				SysexMessage message = new SysexMessage();
+				message.setMessage(data, data.length);
+				getReceiver().send(message, -1);
+			} catch (InvalidMidiDataException e) {
+				throw new MidiPlayerException(e);
+			}
+		}
 	}
 
 	public void sendNoteOn(int channel, int key, int velocity) {

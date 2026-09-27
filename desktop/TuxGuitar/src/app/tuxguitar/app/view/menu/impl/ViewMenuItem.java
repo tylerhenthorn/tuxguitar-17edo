@@ -19,7 +19,6 @@ import app.tuxguitar.app.action.impl.view.TGToggleEditToolbarAction;
 import app.tuxguitar.app.action.impl.view.TGToggleFretBoardEditorAction;
 import app.tuxguitar.app.action.impl.view.TGToggleMainToolbarAction;
 import app.tuxguitar.app.action.impl.view.TGToggleMatrixEditorAction;
-import app.tuxguitar.app.action.impl.view.TGTogglePianoEditorAction;
 import app.tuxguitar.app.action.impl.view.TGToggleTableViewerAction;
 import app.tuxguitar.app.action.impl.view.TGToggleTransportDialogAction;
 import app.tuxguitar.app.system.icons.TGIconManager;
@@ -48,7 +47,6 @@ public class ViewMenuItem extends TGMenuItem {
 	private UIMenuCheckableItem showFretBoard;
 	private UIMenuCheckableItem showInstruments;
 	private UIMenuCheckableItem showTransport;
-	private UIMenuCheckableItem showPiano;
 	private UIMenuCheckableItem showMatrix;
 	private UIMenuCheckableItem pageLayout;
 	private UIMenuCheckableItem linearLayout;
@@ -98,8 +96,6 @@ public class ViewMenuItem extends TGMenuItem {
 		this.showTransport.addSelectionListener(this.createActionProcessor(TGToggleTransportDialogAction.NAME));
 
 		//--PIANO--
-		this.showPiano = this.layoutMenuItem.getMenu().createCheckItem();
-		this.showPiano.addSelectionListener(this.createActionProcessor(TGTogglePianoEditorAction.NAME));
 
 		//--MATRIX--
 		this.showMatrix = this.layoutMenuItem.getMenu().createCheckItem();
@@ -169,7 +165,6 @@ public class ViewMenuItem extends TGMenuItem {
 		this.showFretBoard.setChecked(TuxGuitar.getInstance().getFretBoardEditor().isVisible());
 		this.showInstruments.setChecked(!TuxGuitar.getInstance().getChannelManager().isDisposed());
 		this.showTransport.setChecked(!TGTransportDialog.getInstance(this.findContext()).isDisposed());
-		this.showPiano.setChecked(!TuxGuitar.getInstance().getPianoEditor().isDisposed());
 		this.showMatrix.setChecked(!TuxGuitar.getInstance().getMatrixEditor().isDisposed());
 		this.pageLayout.setChecked(tablature.getViewLayout() instanceof TGLayoutVertical);
 		this.linearLayout.setChecked(tablature.getViewLayout() instanceof TGLayoutHorizontal);
@@ -192,7 +187,6 @@ public class ViewMenuItem extends TGMenuItem {
 		setMenuItemTextAndAccelerator(this.showFretBoard, "view.show-fretboard", TGToggleFretBoardEditorAction.NAME);
 		setMenuItemTextAndAccelerator(this.showInstruments, "view.show-instruments", TGToggleChannelsDialogAction.NAME);
 		setMenuItemTextAndAccelerator(this.showTransport, "view.show-transport", TGToggleTransportDialogAction.NAME);
-		setMenuItemTextAndAccelerator(this.showPiano, "view.show-piano", TGTogglePianoEditorAction.NAME);
 		setMenuItemTextAndAccelerator(this.showMatrix, "view.show-matrix", TGToggleMatrixEditorAction.NAME);
 		setMenuItemTextAndAccelerator(this.pageLayout, "view.layout.page", TGSetPageLayoutAction.NAME);
 		setMenuItemTextAndAccelerator(this.linearLayout, "view.layout.linear", TGSetLinearLayoutAction.NAME);
@@ -216,7 +210,6 @@ public class ViewMenuItem extends TGMenuItem {
 		this.showFretBoard.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.FRETBOARD));
 		this.showInstruments.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.INSTRUMENTS));
 		this.showTransport.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.TRANSPORT));
-		this.showPiano.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.PIANO));
 		this.showMatrix.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.MATRIX));
 		this.pageLayout.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.LAYOUT_PAGE));
 		this.linearLayout.setImage(TuxGuitar.getInstance().getIconManager().getImageByName(TGIconManager.LAYOUT_LINEAR));

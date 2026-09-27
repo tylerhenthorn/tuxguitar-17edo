@@ -3,6 +3,7 @@ package app.tuxguitar.app.view.dialog.track;
 import java.util.List;
 
 import app.tuxguitar.app.TuxGuitar;
+import app.tuxguitar.app.util.TGEdoNoteNames;
 import app.tuxguitar.app.action.TGActionProcessorListener;
 import app.tuxguitar.app.action.impl.track.TGOpenTrackTuningDialogAction;
 import app.tuxguitar.app.action.impl.view.TGOpenViewAction;
@@ -60,7 +61,7 @@ public class TGTrackPropertiesDialog implements TGEventListener {
 	private static final float MINIMUM_BUTTON_WIDTH = 80;
 	private static final float MINIMUM_BUTTON_HEIGHT = 25;
 	private static final int MIN_MAXFRET_NUMER = 12;
-	private static final int MAX_MAXFRET_NUMBER = 39;
+	private static final int MAX_MAXFRET_NUMBER = 99;
 
 	private TGViewContext context;
 	private UIWindow dialog;
@@ -281,7 +282,7 @@ public class TGTrackPropertiesDialog implements TGEventListener {
 			if( i > 0 ) {
 				label.append(" ");
 			}
-			String noteName = TGMusicKeyUtils.sharpNoteName(tuning.get(tuning.size() - i - 1).getValue());
+			String noteName = TGEdoNoteNames.shortName(TuxGuitar.getInstance().getContext(), tuning.get(tuning.size() - i - 1).getValue());
 			isValid &= (noteName!=null);
 			label.append(noteName);
 		}

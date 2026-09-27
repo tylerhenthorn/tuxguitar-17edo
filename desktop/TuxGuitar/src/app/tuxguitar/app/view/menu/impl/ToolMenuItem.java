@@ -8,7 +8,6 @@ import app.tuxguitar.app.TuxGuitar;
 import app.tuxguitar.app.action.impl.settings.TGOpenKeyBindingEditorAction;
 import app.tuxguitar.app.action.impl.settings.TGOpenPluginListDialogAction;
 import app.tuxguitar.app.action.impl.settings.TGOpenSettingsEditorAction;
-import app.tuxguitar.app.action.impl.tools.TGOpenScaleDialogAction;
 import app.tuxguitar.app.action.impl.tools.TGOpenTransposeDialogAction;
 import app.tuxguitar.app.action.impl.tools.TGToggleBrowserAction;
 import app.tuxguitar.app.system.icons.TGIconManager;
@@ -22,7 +21,6 @@ import app.tuxguitar.ui.menu.UIMenuSubMenuItem;
 public class ToolMenuItem extends TGMenuItem {
 
 	private UIMenuSubMenuItem settingsMenuItem;
-	private UIMenuActionItem scale;
 	private UIMenuActionItem browser;
 	private UIMenuActionItem transpose;
 	private UIMenuActionItem plugins;
@@ -38,10 +36,6 @@ public class ToolMenuItem extends TGMenuItem {
 		//--TRANSPOSE--
 		this.transpose = this.settingsMenuItem.getMenu().createActionItem();
 		this.transpose.addSelectionListener(this.createActionProcessor(TGOpenTransposeDialogAction.NAME));
-
-		//--SCALE--
-		this.scale = this.settingsMenuItem.getMenu().createActionItem();
-		this.scale.addSelectionListener(this.createActionProcessor(TGOpenScaleDialogAction.NAME));
 
 		//--BROWSER--
 		this.browser = this.settingsMenuItem.getMenu().createActionItem();
@@ -78,7 +72,6 @@ public class ToolMenuItem extends TGMenuItem {
 	public void loadProperties(){
 		setMenuItemTextAndAccelerator(this.settingsMenuItem, "tools", null);
 		setMenuItemTextAndAccelerator(this.transpose, "tools.transpose", TGOpenTransposeDialogAction.NAME);
-		setMenuItemTextAndAccelerator(this.scale, "tools.scale", TGOpenScaleDialogAction.NAME);
 		setMenuItemTextAndAccelerator(this.browser, "tools.browser", TGToggleBrowserAction.NAME);
 		setMenuItemTextAndAccelerator(this.plugins, "tools.plugins", TGOpenPluginListDialogAction.NAME);
 		setMenuItemTextAndAccelerator(this.keyBindings, "tools.shortcuts", TGOpenKeyBindingEditorAction.NAME);

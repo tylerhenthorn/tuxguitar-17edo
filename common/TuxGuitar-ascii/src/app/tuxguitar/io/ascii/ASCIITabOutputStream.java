@@ -1,5 +1,6 @@
 package app.tuxguitar.io.ascii;
 
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -14,10 +15,9 @@ import app.tuxguitar.song.models.TGNote;
 import app.tuxguitar.song.models.TGSong;
 import app.tuxguitar.song.models.TGString;
 import app.tuxguitar.song.models.TGTrack;
+import app.tuxguitar.util.TGMusicKeyUtils;
 
 public class ASCIITabOutputStream {
-
-	private static final String[] TONIC_NAMES = new String[]{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
 
 	private static final int MAX_LINE_LENGTH = 80;
 
@@ -37,10 +37,17 @@ public class ASCIITabOutputStream {
 		this(new FileOutputStream(fileName));
 	}
 
+	private TGFretLabelFormatter fretLabelFormatter = TGFretLabelFormatter.DEFAULT;
+
+	public void setFretLabelFormatter(TGFretLabelFormatter fretLabelFormatter) {
+		this.fretLabelFormatter = (fretLabelFormatter != null ? fretLabelFormatter : TGFretLabelFormatter.DEFAULT);
+	}
+
 	public void writeSong(TGSong song){
 		this.manager = new TGSongManager();
 
 		this.out = new ASCIIOutputStream(this.stream);
+		this.out.setFretLabelFormatter(this.fretLabelFormatter);
 		this.drawSong(song);
 		this.out.flush();
 		this.out.close();
@@ -72,7 +79,8 @@ public class ASCIITabOutputStream {
 		int maxTuningLength = 1;
 		for(int i = 0; i < track.getStrings().size();i++){
 			TGString string = track.getStrings().get(i);
-			tuning[i] = TONIC_NAMES[(string.getValue() % TONIC_NAMES.length)];
+			String name = TGMusicKeyUtils.sharpNoteName(string.getValue());
+			tuning[i] = (name != null ? name : "");
 			maxTuningLength = Math.max(maxTuningLength,tuning[i].length());
 		}
 

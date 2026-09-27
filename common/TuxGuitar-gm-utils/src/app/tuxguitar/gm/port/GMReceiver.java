@@ -16,4 +16,7 @@ public interface GMReceiver {
 
 	public void sendPitchBend(int channel, int value) throws MidiPlayerException;
 
+	default void sendSysex(byte[] data) throws MidiPlayerException {
+	}
+
 }

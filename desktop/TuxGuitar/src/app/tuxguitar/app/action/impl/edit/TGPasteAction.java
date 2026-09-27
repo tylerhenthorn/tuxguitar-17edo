@@ -31,15 +31,16 @@ public class TGPasteAction extends TGActionBase {
 		super(context, NAME);
 	}
 
+	protected TGPasteAction(TGContext context, String name) {
+		super(context, name);
+	}
+
 	protected void processAction(TGActionContext tgActionContext){
 		TGClipboard clipboard = TGClipboard.getInstance(getContext());
 		TGStoredBeatList beatList = TGClipboard.getInstance(this.getContext()).getBeats();
 		if (clipboard.getSegment() != null) {
 			TGActionManager.getInstance(this.getContext()).execute(TGOpenMeasurePasteDialogAction.NAME, tgActionContext);
 		} else if (beatList != null && beatList.getBeats().size() > 0) {
-			TGFactory factory = getSongManager(tgActionContext).getFactory();
-			TGSongManager songManager = this.getSongManager(tgActionContext);
-			TGTrackManager trackManager = songManager.getTrackManager();
 			TGBeat beat = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_BEAT);
 			TGBeatRange beatRange = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_BEAT_RANGE);
 			TGTrack destTrack = tgActionContext.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_TRACK);
@@ -50,6 +51,16 @@ public class TGPasteAction extends TGActionBase {
 				destinationBeat = beatRange.getBeats().get(0);
 			}
 
+			this.pasteBeats(tgActionContext, beatList, destTrack, destinationBeat.getPreciseStart());
+		}
+	}
+
+	protected void pasteBeats(TGActionContext tgActionContext, TGStoredBeatList beatList, TGTrack destTrack, long preciseStart) {
+		{
+			TGSongManager songManager = this.getSongManager(tgActionContext);
+			TGFactory factory = songManager.getFactory();
+			TGTrackManager trackManager = songManager.getTrackManager();
+
 			// don't copy paste between percussion/non-percussion tracks
 			if (beatList.isPercussionTrack() == destTrack.isPercussion()) {
 				// clone clipboard content before modifying it, so it can be re-pasted later
@@ -59,7 +70,7 @@ public class TGPasteAction extends TGActionBase {
 						destTrack.getStrings(), destTrack.getMaxFret());
 
 				// replace beats at required position
-				List<TGBeat> newBeats = trackManager.replaceBeats(destTrack, beatsListToPaste.getBeats(), destinationBeat.getPreciseStart());
+				List<TGBeat> newBeats = trackManager.replaceBeats(destTrack, beatsListToPaste.getBeats(), preciseStart);
 
 				// need to add extra beats at the end? (e.g. when pasting at end of song)
 				if (beatsListToPaste.getBeats().size() > newBeats.size()) {

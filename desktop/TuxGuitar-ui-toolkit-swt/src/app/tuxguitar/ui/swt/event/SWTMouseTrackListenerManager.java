@@ -45,13 +45,13 @@ public class SWTMouseTrackListenerManager implements MouseTrackListener {
 
 	public void mouseEnter(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.mouseEnterListener.onMouseEnter(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.mouseEnterListener.onMouseEnter(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 
 	public void mouseExit(MouseEvent e) {
 		if(!this.control.isIgnoreEvents()) {
-			this.mouseExitListener.onMouseExit(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0));
+			this.mouseExitListener.onMouseExit(new UIMouseEvent(this.control, new UIPosition(e.x, e.y), e.button, (e.stateMask & SWT.SHIFT) != 0, (e.stateMask & SWT.MOD1) != 0));
 		}
 	}
 

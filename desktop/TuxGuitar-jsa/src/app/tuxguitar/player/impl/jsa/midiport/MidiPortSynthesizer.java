@@ -4,6 +4,9 @@ import java.io.File;
 
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiChannel;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.SysexMessage;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
@@ -165,6 +168,25 @@ public class MidiPortSynthesizer extends GMOutputPort{
 }
 
 class MidiPortSynthesizerReceiver implements GMReceiver{
+	private Receiver sysexReceiver;
+
+	/** System Exclusive (e.g. MIDI Tuning Standard dumps) goes through the synthesizer's receiver; the channel API has no equivalent. */
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		if( this.port.getSynth() != null && data != null ){
+			try {
+				if( this.sysexReceiver == null ){
+					this.sysexReceiver = this.port.getSynth().getReceiver();
+				}
+				SysexMessage message = new SysexMessage();
+				message.setMessage(data, data.length);
+				this.sysexReceiver.send(message, -1);
+			} catch (Exception e) {
+				this.sysexReceiver = null;
+				throw new MidiPlayerException(e);
+			}
+		}
+	}
+
 
 	private MidiPortSynthesizer port;
 	private MidiChannel[] channels;

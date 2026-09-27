@@ -23,7 +23,7 @@ import app.tuxguitar.ui.widget.UIWindow;
 
 public class TGTransposeDialog {
 
-	private static final int TRANSPOSITION_SEMITONES = 12;
+	private static final int TRANSPOSITION_STEPS = 17;
 
 	public void show(final TGViewContext context) {
 		final UIFactory uiFactory = TGApplication.getInstance(context.getContext()).getFactory();
@@ -46,7 +46,7 @@ public class TGTransposeDialog {
 		groupLayout.set(transpositionLabel, 1, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, false, true);
 
 		final UIDropDownSelect<Integer> transpositionCombo = uiFactory.createDropDownSelect(group);
-		for( int i = -TRANSPOSITION_SEMITONES ; i <= TRANSPOSITION_SEMITONES; i ++ ){
+		for( int i = -TRANSPOSITION_STEPS ; i <= TRANSPOSITION_STEPS; i ++ ){
 			transpositionCombo.addItem(new UISelectItem<Integer>(Integer.toString(i), i));
 		}
 

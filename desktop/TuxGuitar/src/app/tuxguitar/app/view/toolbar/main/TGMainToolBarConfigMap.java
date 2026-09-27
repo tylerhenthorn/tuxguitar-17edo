@@ -50,7 +50,6 @@ import app.tuxguitar.app.action.impl.file.TGSaveFileAction;
 import app.tuxguitar.app.action.impl.help.TGHelpGoHomeAction;
 import app.tuxguitar.app.action.impl.help.TGOpenAboutDialogAction;
 import app.tuxguitar.app.action.impl.help.TGOpenDocumentationDialogAction;
-import app.tuxguitar.app.action.impl.insert.TGOpenChordDialogAction;
 import app.tuxguitar.app.action.impl.insert.TGOpenRepeatAlternativeDialogAction;
 import app.tuxguitar.app.action.impl.insert.TGOpenRepeatCloseDialogAction;
 import app.tuxguitar.app.action.impl.insert.TGOpenTextDialogAction;
@@ -99,7 +98,6 @@ import app.tuxguitar.app.action.impl.view.TGToggleChannelsDialogAction;
 import app.tuxguitar.app.action.impl.view.TGToggleEditToolbarAction;
 import app.tuxguitar.app.action.impl.view.TGToggleFretBoardEditorAction;
 import app.tuxguitar.app.action.impl.view.TGToggleMatrixEditorAction;
-import app.tuxguitar.app.action.impl.view.TGTogglePianoEditorAction;
 import app.tuxguitar.app.action.impl.view.TGToggleTableViewerAction;
 import app.tuxguitar.app.action.impl.view.TGToggleTransportDialogAction;
 import app.tuxguitar.app.system.icons.TGIconManager;
@@ -395,12 +393,6 @@ public class TGMainToolBarConfigMap {
 				return (!TGTransportDialog.getInstance(context).isDisposed());
 			}
 		});
-		registerCheckable("view.show-piano", TGTogglePianoEditorAction.NAME, TGIconManager.PIANO, new TGMainToolBarItemUpdater() {
-			@Override
-			public boolean checked(TGContext context, boolean isRunning) {
-				return (!TuxGuitar.getInstance().getPianoEditor().isDisposed());
-			}
-		});
 		registerCheckable("view.show-matrix", TGToggleMatrixEditorAction.NAME, TGIconManager.MATRIX, new TGMainToolBarItemUpdater() {
 			@Override
 			public boolean checked(TGContext context, boolean isRunning) {
@@ -523,7 +515,6 @@ public class TGMainToolBarConfigMap {
 
 		//------- Beat --------
 		this.groupName = "beat";
-		registerButton("insert.chord", TGOpenChordDialogAction.NAME, TGIconManager.CHORD, DISABLE_ON_PLAY);
 		registerButton("text.insert", TGOpenTextDialogAction.NAME, TGIconManager.TEXT, DISABLE_ON_PLAY);
 		registerCheckable("beat.stroke-down", TGOpenStrokeDownDialogAction .NAME, TGIconManager.STROKE_DOWN, new TGMainToolBarItemUpdater() {
 			@Override

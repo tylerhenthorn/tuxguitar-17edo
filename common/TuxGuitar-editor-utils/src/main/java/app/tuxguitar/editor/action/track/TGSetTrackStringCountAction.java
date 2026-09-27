@@ -4,6 +4,7 @@ import app.tuxguitar.action.TGActionContext;
 import app.tuxguitar.document.TGDocumentContextAttributes;
 import app.tuxguitar.editor.action.TGActionBase;
 import app.tuxguitar.song.models.TGTrack;
+import app.tuxguitar.player.base.MidiTuning;
 import app.tuxguitar.util.TGContext;
 
 public class TGSetTrackStringCountAction extends TGActionBase {
@@ -20,7 +21,11 @@ public class TGSetTrackStringCountAction extends TGActionBase {
 		Integer count = context.getAttribute(ATTRIBUTE_STRING_COUNT);
 		TGTrack track = context.getAttribute(TGDocumentContextAttributes.ATTRIBUTE_TRACK);
 		if( track != null && count != null ){
+			boolean defaultTuning = (track.stringCount() != count);
 			getSongManager(context).getTrackManager().changeStringCount(track, count);
+			if (defaultTuning) {
+				MidiTuning.getInstance(getContext()).convertDefaultTuning(track);
+			}
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package app.tuxguitar.io.svg;
 
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
+import app.tuxguitar.util.TGContext;
 import java.io.PrintWriter;
 
 import app.tuxguitar.io.base.TGFileFormat;
@@ -11,8 +13,15 @@ public class SVGSongWriter implements TGSongWriter {
 
 	public static final TGFileFormat FILE_FORMAT = new TGFileFormat("Scalable Vector Graphics", "image/svg+xml", new String[]{"svg"});
 
+	private TGContext context;
+
 	public SVGSongWriter() {
+		this(null);
+	}
+
+	public SVGSongWriter(TGContext context) {
 		super();
+		this.context = context;
 	}
 
 	public TGFileFormat getFileFormat() {
@@ -26,6 +35,7 @@ public class SVGSongWriter implements TGSongWriter {
 				styles = new SVGStyles();
 				styles.configureWithDefaults();
 			}
+			styles.getStyles().setFretLabelFormatter(TGFretLabelFormatter.getInstance(this.context));
 
 			StringBuffer svgBuffer = new StringBuffer();
 

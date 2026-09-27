@@ -635,6 +635,8 @@ public class MidiPlayer{
 			while( tgChannels.hasNext() ){
 				this.updateChannel(tgChannels.next());
 			}
+
+			this.updateTuning();
 		} finally {
 			this.unlock();
 		}
@@ -737,6 +739,36 @@ public class MidiPlayer{
 			getOutputTransmitter().sendControlChange(channelId,MidiControllers.PHASER,phaser);
 			getOutputTransmitter().sendControlChange(channelId,MidiControllers.TREMOLO,tremolo);
 			getOutputTransmitter().sendControlChange(channelId,MidiControllers.EXPRESSION,expression);
+		} catch (MidiPlayerException e) {
+			e.printStackTrace();
+		} finally {
+			this.unlock();
+		}
+	}
+
+	/**
+	 * Tunes the synthesizer to 17-EDO (MIDI Tuning Standard
+	 * bulk dump + tuning program select on every melodic channel).
+	 */
+	private void updateTuning() {
+		try {
+			this.lock();
+
+			MidiTuning tuning = MidiTuning.getInstance(this.context);
+			this.getSynthesizerProxy().sendSysex(tuning.createBulkTuningDump());
+
+			Iterator<TGChannel> tgChannels = this.getSong().getChannels();
+			while( tgChannels.hasNext() ){
+				TGChannel tgChannel = tgChannels.next();
+				if(!tgChannel.isPercussionChannel() ){
+					// RPN 3 = tuning program, then leave RPN 0 (pitch bend range) selected as before
+					getOutputTransmitter().sendControlChange(tgChannel.getChannelId(), MidiControllers.RPN_MSB, 0);
+					getOutputTransmitter().sendControlChange(tgChannel.getChannelId(), MidiControllers.RPN_LSB, 3);
+					getOutputTransmitter().sendControlChange(tgChannel.getChannelId(), MidiControllers.DATA_ENTRY_MSB, tuning.getTuningProgram());
+					getOutputTransmitter().sendControlChange(tgChannel.getChannelId(), MidiControllers.RPN_MSB, 0);
+					getOutputTransmitter().sendControlChange(tgChannel.getChannelId(), MidiControllers.RPN_LSB, 0);
+				}
+			}
 		} catch (MidiPlayerException e) {
 			e.printStackTrace();
 		} finally {

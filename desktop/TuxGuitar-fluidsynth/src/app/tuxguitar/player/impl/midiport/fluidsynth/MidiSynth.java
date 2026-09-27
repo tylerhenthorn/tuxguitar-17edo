@@ -70,6 +70,12 @@ public class MidiSynth {
 		}
 	}
 
+	public void sendSysex(byte[] data) {
+		if(isInitialized() && data != null){
+			this.sysex(this.instance, data);
+		}
+	}
+
 	public void sendNoteOn(int channel, int key, int velocity) {
 		if(isInitialized()){
 			this.noteOn(this.instance,channel, key, velocity);
@@ -223,6 +229,8 @@ public class MidiSynth {
 	private native void programChange(long instance,int channel,int program);
 
 	private native void pitchBend(long instance,int channel,int value);
+
+	private native void sysex(long instance, byte[] data);
 
 	private native void setDoubleProperty(long instance, String key , double value );
 

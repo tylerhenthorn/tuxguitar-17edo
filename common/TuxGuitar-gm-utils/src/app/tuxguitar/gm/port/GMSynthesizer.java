@@ -57,6 +57,10 @@ public class GMSynthesizer implements MidiSynthesizer{
 		return false;
 	}
 
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		this.outputPort.getReceiver().sendSysex(data);
+	}
+
 	public List<GMChannel> getChannels() {
 		return this.channels;
 	}

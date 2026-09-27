@@ -1,5 +1,6 @@
 package app.tuxguitar.io.pdf;
 
+import app.tuxguitar.graphics.control.TGFretLabelFormatter;
 import app.tuxguitar.graphics.control.TGLayoutStyles;
 import app.tuxguitar.ui.resource.UIColorModel;
 import app.tuxguitar.ui.resource.UIFontModel;
@@ -11,6 +12,7 @@ public class PDFLayoutStyles extends TGLayoutStyles {
 
 	public PDFLayoutStyles(TGContext context) {
 		PDFSettingsManager settingsMgr = PDFSettingsManager.getInstance(context);
+		this.setFretLabelFormatter(TGFretLabelFormatter.getInstance(context));
 
 		this.setBufferEnabled(false);
 		this.setFirstMeasureSpacing(settingsMgr.getSetting(PDFSettings.FIRST_MEASURE_SPACING));

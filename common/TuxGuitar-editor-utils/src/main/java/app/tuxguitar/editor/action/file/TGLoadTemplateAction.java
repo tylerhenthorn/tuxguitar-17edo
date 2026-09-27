@@ -30,6 +30,7 @@ public class TGLoadTemplateAction extends TGActionBase{
 		}
 
 		if( tgSong != null ){
+			TGNewSongAction.convertDefaultTunings(getContext(), tgSong);
 			context.setAttribute(TGDocumentContextAttributes.ATTRIBUTE_SONG, tgSong);
 
 			TGActionManager tgActionManager = TGActionManager.getInstance(getContext());

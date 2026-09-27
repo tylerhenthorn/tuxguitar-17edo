@@ -28,6 +28,8 @@ import app.tuxguitar.ui.event.UISelectionEvent;
 import app.tuxguitar.ui.event.UISelectionListener;
 import app.tuxguitar.ui.layout.UITableLayout;
 import app.tuxguitar.ui.widget.*;
+import app.tuxguitar.app.util.TGEdoNoteNames;
+import app.tuxguitar.player.base.MidiTuning;
 import app.tuxguitar.util.TGMusicKeyUtils;
 
 public class TGTrackTuningDialog {
@@ -43,6 +45,9 @@ public class TGTrackTuningDialog {
 	private List<TGTrackTuningModel> tuning;
 	private UITable<TGTrackTuningModel> tuningTable;
 	private UISpinner offsetSpinner;
+	private UILabel edoWarning;
+	private UIButton buttonStepUp;
+	private UIButton buttonStepDown;
 	private UIButton buttonEdit;
 	private UIButton buttonDelete;
 	private UIButton buttonMoveUp;
@@ -117,7 +122,7 @@ public class TGTrackTuningDialog {
 	private TuningPreset findTuningInGroup(List<TGTrackTuningModel> tuningModel, TuningGroup group) {
 		if (group.getGroups() != null && !group.getGroups().isEmpty()) {
 			for (TuningGroup searchGroup : group.getGroups() ) {
-				TuningPreset found = findTuningInGroup(tuning, searchGroup);
+				TuningPreset found = findTuningInGroup(tuningModel, searchGroup);
 				if (found != null) {
 					return(found);
 				}
@@ -202,12 +207,12 @@ public class TGTrackTuningDialog {
 	private String tuningPresetLabel(TuningPreset preset) {
 		StringBuilder label = new StringBuilder();
 		label.append(preset.getName()).append(" - ");
-		int[] values = preset.getValues();
+		int[] values = presetValues(preset);
 		for(int i = 0 ; i < values.length; i ++) {
 			if( i > 0 ) {
 				label.append(" ");
 			}
-		label.append(TGMusicKeyUtils.sharpNoteName(values[values.length - i - 1]));
+		label.append(TGEdoNoteNames.shortName(TuxGuitar.getInstance().getContext(), values[values.length - i - 1]));
 		}
 		return label.toString();
 	}
@@ -295,6 +300,23 @@ public class TGTrackTuningDialog {
 				TGTrackTuningDialog.this.onRemoveTuningModel();
 			}
 		});
+
+		buttonStepDown = factory.createButton(buttonsPanel);
+		buttonStepDown.setText(TuxGuitar.getProperty("tuning.edo.step-down"));
+		buttonStepDown.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				TGTrackTuningDialog.this.nudgeString(-1);
+			}
+		});
+		buttonStepUp = factory.createButton(buttonsPanel);
+		buttonStepUp.setText(TuxGuitar.getProperty("tuning.edo.step-up"));
+		buttonStepUp.addSelectionListener(new UISelectionListener() {
+			public void onSelect(UISelectionEvent event) {
+				TGTrackTuningDialog.this.nudgeString(1);
+			}
+		});
+		buttonsLayout.set(buttonStepDown, 1, 6, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, false, false);
+		buttonsLayout.set(buttonStepUp, 1, 7, UITableLayout.ALIGN_RIGHT, UITableLayout.ALIGN_FILL, false, false);
 
 		this.tuningTable.addSelectionListener(new UISelectionListener() {
 			public void onSelect(UISelectionEvent event) {
@@ -470,6 +492,66 @@ public class TGTrackTuningDialog {
 		this.offsetSpinner.setValue(track.getOffset());
 		topLayout.set(this.offsetSpinner, 2, 1, UITableLayout.ALIGN_FILL, UITableLayout.ALIGN_CENTER, true, true);
 
+		//---------------------------------WARNING-------------------------------
+		this.edoWarning = factory.createLabel(top);
+		this.edoWarning.setText("");
+		topLayout.set(this.edoWarning, 3, 1, UITableLayout.ALIGN_LEFT, UITableLayout.ALIGN_CENTER, true, true, 1, 1, 260f, null, null);
+	}
+
+	/** A preset from the user's custom group is stored as raw values and never converted. */
+	private boolean isCustomPreset(TuningPreset preset) {
+		TuningGroup customGroup = this.allTuningsGroup.getGroups().get(0);
+		for (TuningGroup group = preset.getParent(); group != null; group = group.getParent()) {
+			if( group == customGroup ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The string values a preset yields: built-in (12-EDO) presets are converted to the nearest 17-EDO steps. */
+	private int[] presetValues(TuningPreset preset) {
+		int[] values = preset.getValues();
+		if( !this.isCustomPreset(preset) ) {
+			MidiTuning tuning = MidiTuning.getInstance(this.context.getContext());
+			int[] converted = new int[values.length];
+			for (int i = 0; i < values.length; i++) {
+				converted[i] = tuning.toStepValue(values[i]);
+			}
+			return converted;
+		}
+		return values;
+	}
+
+	/**
+	 * The highest string plus the track's frets can run above MIDI key 127. Explain in the dialog
+	 * (never a modal: this runs inside the preset drop-down's selection event) how many frets fit.
+	 */
+	private void warnIfPresetOutOfRange(TuningPreset preset) {
+		String message = "";
+		int maxFret = this.findTrack().getMaxFret();
+		int highest = Integer.MIN_VALUE;
+		for (int value : this.presetValues(preset)) {
+			highest = Math.max(highest, value);
+		}
+		if( highest + maxFret > 127 ) {
+			message = TuxGuitar.getProperty("tuning.edo.range-frets", new String[] {preset.getName(), Integer.toString(maxFret), Integer.toString(127 - highest)});
+		}
+		this.edoWarning.setText(message);
+		if( this.edoWarning.getParent() instanceof UILayoutContainer ){
+			((UILayoutContainer) this.edoWarning.getParent()).layout();
+		}
+	}
+
+	private void nudgeString(int delta) {
+		TGTrackTuningModel model = this.tuningTable.getSelectedValue();
+		if( model != null ) {
+			int value = Math.max(0, Math.min(127, model.getValue() + delta));
+			model.setValue(value);
+			this.updateTuningControls();
+			this.tuningTable.setSelectedValue(model);
+			this.updateTuningButtons();
+		}
 	}
 
 	private void initButtons(UILayoutContainer parent) {
@@ -555,7 +637,8 @@ public class TGTrackTuningDialog {
 	private void updateTuningTable(TuningPreset preset) {
 		tuning.clear();
 		if (preset!=null && preset.getValues().length>0) {
-			for (int value:preset.getValues()) {
+			this.warnIfPresetOutOfRange(preset);
+			for (int value:presetValues(preset)) {
 				TGTrackTuningModel model = new TGTrackTuningModel();
 				model.setValue(value);
 				tuning.add(model);
@@ -648,11 +731,12 @@ public class TGTrackTuningDialog {
 		if (tuningModel==null && tuningPreset!=null) {
 			return(false);
 		}
-		if (tuningPreset.getValues().length != tuningModel.size()) {
+		int[] values = presetValues(tuningPreset);
+		if (values.length != tuningModel.size()) {
 			return(false);
 		}
 		for (int i=0; i<tuningModel.size(); i++) {
-			if (tuningPreset.getValues()[i] != tuningModel.get(i).getValue()) {
+			if (values[i] != tuningModel.get(i).getValue()) {
 				return(false);
 			}
 		}
@@ -665,8 +749,8 @@ public class TGTrackTuningDialog {
 		this.tuningTable.removeItems();
 		for(TGTrackTuningModel model : this.tuning) {
 			UITableItem<TGTrackTuningModel> item = new UITableItem<TGTrackTuningModel>(model);
-			item.setText(0, TGMusicKeyUtils.sharpNoteName(model.getValue()));
-			item.setText(1, TGMusicKeyUtils.sharpNoteFullName(model.getValue()));
+			item.setText(0, TGEdoNoteNames.shortName(TuxGuitar.getInstance().getContext(), model.getValue()));
+			item.setText(1, TGEdoNoteNames.fullName(TuxGuitar.getInstance().getContext(), model.getValue()));
 
 			this.tuningTable.addItem(item);
 		}
@@ -683,6 +767,8 @@ public class TGTrackTuningDialog {
 		buttonDelete.setEnabled(model != null);
 		buttonMoveUp.setEnabled(model != null && index > 0);
 		buttonMoveDown.setEnabled(model != null && index < this.tuning.size() - 1);
+		buttonStepUp.setEnabled(model != null);
+		buttonStepDown.setEnabled(model != null);
 	}
 
 	private void updateTuningControls() {

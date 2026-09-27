@@ -36,17 +36,13 @@
 		<module>../../TuxGuitar-gtp-ui</module>
 		<module>../../../common/TuxGuitar-gpx</module>
 		<module>../../TuxGuitar-jsa</module>
-		<module>../../../common/TuxGuitar-lilypond</module>
-		<module>../../TuxGuitar-lilypond-ui</module>
 		<module>../../../common/TuxGuitar-midi</module>
 		<module>../../TuxGuitar-midi-ui</module>
-		<module>../../TuxGuitar-musicxml</module>
 		<module>../../TuxGuitar-awt-graphics</module>
 		<module>../../../common/TuxGuitar-pdf</module>
 		<module>../../TuxGuitar-pdf-ui</module>
 		<module>../../../common/TuxGuitar-ptb</module>
 		<module>../../TuxGuitar-tef</module>
-		<module>../../TuxGuitar-tuner</module>
 		<module>../../TuxGuitar-svg</module>
 		<module>../../TuxGuitar-image-swt</module>
 		<module>../../TuxGuitar-cocoa-integration-swt</module>
@@ -214,18 +210,6 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>${project.groupId}</groupId>
-									<artifactId>tuxguitar-lilypond</artifactId>
-									<destFileName>tuxguitar-lilypond.jar</destFileName>
-									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>tuxguitar-lilypond-ui</artifactId>
-									<destFileName>tuxguitar-lilypond-ui.jar</destFileName>
-									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
 									<artifactId>tuxguitar-midi</artifactId>
 									<destFileName>tuxguitar-midi.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
@@ -234,12 +218,6 @@
 									<groupId>${project.groupId}</groupId>
 									<artifactId>tuxguitar-midi-ui</artifactId>
 									<destFileName>tuxguitar-midi-ui.jar</destFileName>
-									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>tuxguitar-musicxml</artifactId>
-									<destFileName>tuxguitar-musicxml.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -264,12 +242,6 @@
 									<groupId>${project.groupId}</groupId>
 									<artifactId>tuxguitar-tef</artifactId>
 									<destFileName>tuxguitar-tef.jar</destFileName>
-									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>tuxguitar-tuner</artifactId>
-									<destFileName>tuxguitar-tuner.jar</destFileName>
 									<outputDirectory>${project.build.directory}/${project.finalName}/Contents/MacOS/share/plugins</outputDirectory>
 								</artifactItem>
 								<artifactItem>

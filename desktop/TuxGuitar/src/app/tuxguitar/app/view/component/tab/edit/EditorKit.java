@@ -306,16 +306,16 @@ public class EditorKit {
 					if (isNatural()) {
 						// normal edition mode, keep note alteration
 						if (noteAlteration == TGMusicKeyUtils.SHARP) {
-							noteValue++;
+							noteValue += TGMusicKeyUtils.ALTERATION_STEPS;
 						} else if (noteAlteration == TGMusicKeyUtils.FLAT) {
-							noteValue--;
+							noteValue -= TGMusicKeyUtils.ALTERATION_STEPS;
 						}
 					// sharp/flat edition mode: don't consider alteration if present, and add one if absent
 					} else if (noteAlteration == TGMusicKeyUtils.NATURAL) {
 						if (keySignature<=7) {
-							noteValue++;
+							noteValue += TGMusicKeyUtils.ALTERATION_STEPS;
 						} else {
-							noteValue--;
+							noteValue -= TGMusicKeyUtils.ALTERATION_STEPS;
 						}
 					}
 					if(noteValue >= minValue && noteValue <= maxValue){

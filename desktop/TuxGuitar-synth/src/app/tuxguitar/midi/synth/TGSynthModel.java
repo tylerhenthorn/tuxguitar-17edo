@@ -56,6 +56,12 @@ public class TGSynthModel implements MidiSynthesizer{
 		return false;
 	}
 
+	public void sendSysex(byte[] data) throws MidiPlayerException {
+		for(TGSynthChannel channel : this.channels) {
+			channel.sendSysex(data);
+		}
+	}
+
 	public void closeChannels() throws MidiPlayerException{
 		while( countChannels() > 0 ){
 			closeChannel( getChannel(0) );

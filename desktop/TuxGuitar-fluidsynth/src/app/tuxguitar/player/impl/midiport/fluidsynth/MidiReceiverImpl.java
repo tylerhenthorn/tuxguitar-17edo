@@ -35,6 +35,10 @@ public class MidiReceiverImpl implements GMReceiver{
 		this.synth.sendPitchBend(channel, value);
 	}
 
+	public void sendSysex(byte[] data) {
+		this.synth.sendSysex(data);
+	}
+
 	public void sendAllNotesOff() {
 		for(int i = 0; i < 16; i ++){
 			this.sendControlChange(i,MidiControllers.ALL_NOTES_OFF,0);
