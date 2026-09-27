@@ -2,7 +2,6 @@ package app.tuxguitar.graphics.control;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import app.tuxguitar.util.TGContext;
 
@@ -27,7 +26,6 @@ public class TGFretLabelFormatter {
 	/** Formatter with the default dots. */
 	public static final TGFretLabelFormatter DEFAULT = new TGFretLabelFormatter(null);
 
-	private static final Logger LOGGER = Logger.getLogger(TGFretLabelFormatter.class.getName());
 	private static final String CONTEXT_KEY = TGFretLabelFormatter.class.getName();
 
 	/** A dot on the fretboard: which EDO fret it sits on, and what it is called. */
@@ -156,19 +154,19 @@ public class TGFretLabelFormatter {
 			}
 			int sep = entry.indexOf(':');
 			if (sep <= 0 || sep == entry.length() - 1) {
-				LOGGER.warning("EDO fret labels: ignoring malformed dot entry '" + entry + "' (expected fret:name)");
+				System.err.println("EDO fret labels: ignoring malformed dot entry '" + entry + "' (expected fret:name)");
 				continue;
 			}
 			try {
 				int fret = Integer.parseInt(entry.substring(0, sep).trim());
 				String name = entry.substring(sep + 1).trim();
 				if (fret <= 0) {
-					LOGGER.warning("EDO fret labels: ignoring dot entry '" + entry + "' (fret must be > 0)");
+					System.err.println("EDO fret labels: ignoring dot entry '" + entry + "' (fret must be > 0)");
 					continue;
 				}
 				dots.add(new Dot(fret, name));
 			} catch (NumberFormatException e) {
-				LOGGER.warning("EDO fret labels: ignoring malformed dot entry '" + entry + "' (fret is not a number)");
+				System.err.println("EDO fret labels: ignoring malformed dot entry '" + entry + "' (fret is not a number)");
 			}
 		}
 		return dots;
@@ -195,7 +193,7 @@ public class TGFretLabelFormatter {
 			boolean duplicate = false;
 			for (Dot existing : sorted) {
 				if (existing.getFret() == dot.getFret()) {
-					LOGGER.warning("EDO fret labels: dot '" + dot.getName() + "' and dot '" + existing.getName()
+					System.err.println("EDO fret labels: dot '" + dot.getName() + "' and dot '" + existing.getName()
 							+ "' both land on fret " + dot.getFret() + "; keeping '" + existing.getName() + "'");
 					duplicate = true;
 					break;
